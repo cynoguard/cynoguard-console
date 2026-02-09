@@ -115,6 +115,14 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
