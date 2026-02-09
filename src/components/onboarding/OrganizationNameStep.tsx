@@ -48,6 +48,7 @@ export function OrganizationNameStep({
                         required
                         className={cn(
                             "h-12 text-base px-4 rounded-xl border-2 border-slate-200",
+                            "bg-white text-slate-900",
                             "focus:border-black focus:ring-4 focus:ring-black/10",
                             "placeholder:text-slate-400 transition-all duration-200"
                         )}
