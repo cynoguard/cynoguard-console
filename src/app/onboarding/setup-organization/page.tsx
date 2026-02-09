@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,82 +9,74 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Shield, Zap, Globe, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+  ProgressIndicator,
+  NavigationButtons,
+  OrganizationNameStep,
+  TeamSizeStep,
+  BusinessDetailsStep,
+  UseCaseStep,
+} from "@/components/onboarding";
+import { submitOnboardingData } from "@/services/api";
+import type { OnboardingFormData } from "@/types/onboarding";
+
+const TOTAL_STEPS = 4;
+
+const stepConfig = {
+  1: {
+    title: "Organization Setup",
+    description: "Let's start by setting up your organization",
+  },
+  2: {
+    title: "Team Information",
+    description: "Tell us about your team size",
+  },
+  3: {
+    title: "Business Details",
+    description: "Help us understand your business",
+  },
+  4: {
+    title: "Primary Use Cases",
+    description: "Select the features you'd like to use",
+  },
+};
 
 const Page = () => {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<OnboardingFormData>({
     organizationName: '',
     teamSize: '',
     businessType: '',
-    primaryUse: '',
+    primaryUses: [],
   });
 
-  const teamSizes = [
-    { value: '1-10', label: '1-10 employees' },
-    { value: '11-50', label: '11-50 employees' },
-    { value: '51-200', label: '51-200 employees' },
-    { value: '201-500', label: '201-500 employees' },
-    { value: '500+', label: '500+ employees' },
-  ];
+  const currentStepConfig = stepConfig[step as keyof typeof stepConfig];
 
-  const businessTypes = [
-    { value: 'startup', label: 'Startup' },
-    { value: 'smb', label: 'Small & Medium Business' },
-    { value: 'enterprise', label: 'Enterprise' },
-    { value: 'agency', label: 'Agency' },
-    { value: 'other', label: 'Other' },
-  ];
+  const isStepValid = (): boolean => {
+    switch (step) {
+      case 1:
+        return formData.organizationName.trim().length > 0;
+      case 2:
+        return formData.teamSize.length > 0;
+      case 3:
+        return formData.businessType.length > 0;
+      case 4:
+        return formData.primaryUses.length > 0;
+      default:
+        return false;
+    }
+  };
 
-  const primaryUses = [
-    {
-      id: 'bot-detection',
-      title: 'Bot Detection',
-      description: 'Advanced AI-powered bot detection and prevention',
-      icon: <Zap className="w-6 h-6" />,
-    },
-    {
-      id: 'domain-monitoring',
-      title: 'Domain Monitoring',
-      description: 'Real-time domain threat monitoring and typo-squatting detection',
-      icon: <Shield className="w-6 h-6" />,
-    },
-    {
-      id: 'social-monitoring',
-      title: 'Social Media Monitoring',
-      description: 'Track phishing discussions across Reddit, X, and other platforms',
-      icon: <Globe className="w-6 h-6" />,
-    },
-  ];
+  const handleNext = async () => {
+    if (!isStepValid()) return;
 
-  const handleNext = () => {
-    if (step === 1 && !formData.organizationName.trim()) {
-      return;
-    }
-    if (step === 2 && !formData.teamSize) {
-      return;
-    }
-    if (step === 3 && !formData.businessType) {
-      return;
-    }
-    if (step === 4 && !formData.primaryUse) {
-      return;
-    }
-    
-    if (step < 4) {
+    if (step < TOTAL_STEPS) {
       setStep(step + 1);
     } else {
-      // Submit form - redirect to dashboard or next step
-      handleSubmit();
+      await handleSubmit();
     }
   };
 
@@ -96,207 +87,131 @@ const Page = () => {
   };
 
   const handleSubmit = async () => {
-    // TODO: Submit to API
-    console.log('Form data:', formData);
-    // router.push('/dashboard');
+    setIsLoading(true);
+
+    const payload = {
+      organizationName: formData.organizationName,
+      teamSize: formData.teamSize,
+      businessType: formData.businessType,
+      primaryUses: formData.primaryUses,
+    };
+
+    // Log the payload for testing/debugging
+    console.log('='.repeat(50));
+    console.log('ONBOARDING FORM SUBMISSION');
+    console.log('='.repeat(50));
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('='.repeat(50));
+
+    try {
+      const response = await submitOnboardingData(payload);
+      console.log('✅ Onboarding submitted successfully:', response);
+
+      // Navigate to dashboard on success
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('❌ Failed to submit onboarding data:');
+      console.error('Error:', error);
+      console.log('');
+      console.log('📋 Form data that would have been submitted:');
+      console.table(payload);
+      console.log('Primary Uses:', payload.primaryUses);
+
+      // Redirect to error page
+      router.push('/error/server-unavailable');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateFormData = (field: string, value: string) => {
+  const updateField = <K extends keyof OnboardingFormData>(
+    field: K,
+    value: OnboardingFormData[K]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className={cn("min-h-screen bg-white flex items-center justify-center p-6")}>
+    <div className={cn(
+      "min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100",
+      "flex items-center justify-center p-6"
+    )}>
       <div className={cn("w-full max-w-2xl")}>
-        {/* Progress Indicator - Centered */}
-        <div className={cn("mb-8 flex flex-col items-center")}>
-          <div className={cn("flex items-center justify-center mb-2 w-full max-w-md mx-auto")}>
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className={cn("flex items-center flex-1")}>
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    s <= step
-                      ? "bg-black text-white"
-                      : "bg-slate-200 text-slate-500"
-                  )}
-                >
-                  {s}
-                </div>
-                {s < 4 && (
-                  <div
-                    className={cn(
-                      "flex-1 h-0.5 mx-2 transition-colors",
-                      s < step ? "bg-black" : "bg-slate-200"
-                    )}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className={cn("text-sm text-slate-500")}>
-            Step {step} of 4
-          </div>
-        </div>
+        {/* Progress Indicator */}
+        <ProgressIndicator
+          currentStep={step}
+          totalSteps={TOTAL_STEPS}
+          className="mb-8"
+        />
 
         {/* Form Card */}
-        <Card className={cn("border-0 shadow-xl shadow-black/5 dark:shadow-black/20 backdrop-blur-sm bg-card/80")}>
-          <CardHeader className={cn("text-center space-y-2 pb-6")}>
-            <CardTitle className={cn("text-2xl font-bold tracking-tight")}>
-              {step === 1 && "Organization Setup"}
-              {step === 2 && "Team Information"}
-              {step === 3 && "Business Details"}
-              {step === 4 && "Primary Use Case"}
+        <Card className={cn(
+          "border-0 shadow-2xl shadow-black/10",
+          "backdrop-blur-sm bg-white/90",
+          "rounded-2xl overflow-hidden"
+        )}>
+          <CardHeader className={cn("text-center space-y-3 pb-6 pt-8")}>
+            <CardTitle className={cn(
+              "text-2xl font-bold tracking-tight text-slate-900"
+            )}>
+              {currentStepConfig.title}
             </CardTitle>
-            <CardDescription className={cn("text-base")}>
-              {step === 1 && "Let's start by setting up your organization"}
-              {step === 2 && "Tell us about your team"}
-              {step === 3 && "Help us understand your business"}
-              {step === 4 && "Select your primary security focus"}
+            <CardDescription className={cn("text-base text-slate-500")}>
+              {currentStepConfig.description}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {/* Step 1: Organization Name */}
-            {step === 1 && (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="organizationName">Organization Name</FieldLabel>
-                  <Input
-                    id="organizationName"
-                    name="organizationName"
-                    type="text"
-                    placeholder="Acme Inc."
-                    value={formData.organizationName}
-                    onChange={(e) => updateFormData('organizationName', e.target.value)}
-                    required
-                  />
-                </Field>
-              </FieldGroup>
-            )}
 
-            {/* Step 2: Team Size */}
-            {step === 2 && (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="teamSize">Team Size</FieldLabel>
-                  <Select
-                    id="teamSize"
-                    name="teamSize"
-                    value={formData.teamSize}
-                    onChange={(e) => updateFormData('teamSize', e.target.value)}
-                    required
-                  >
-                    <option value="">Select team size</option>
-                    {teamSizes.map((size) => (
-                      <option key={size.value} value={size.value}>
-                        {size.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </FieldGroup>
-            )}
+          <CardContent className="px-8 pb-8">
+            {/* Step Content with Animation */}
+            <div
+              key={step}
+              className="animate-in fade-in-0 slide-in-from-right-4 duration-300"
+            >
+              {step === 1 && (
+                <OrganizationNameStep
+                  value={formData.organizationName}
+                  onChange={(value) => updateField('organizationName', value)}
+                />
+              )}
 
-            {/* Step 3: Business Type */}
-            {step === 3 && (
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="businessType">Business Type</FieldLabel>
-                  <Select
-                    id="businessType"
-                    name="businessType"
-                    value={formData.businessType}
-                    onChange={(e) => updateFormData('businessType', e.target.value)}
-                    required
-                  >
-                    <option value="">Select business type</option>
-                    {businessTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </FieldGroup>
-            )}
+              {step === 2 && (
+                <TeamSizeStep
+                  value={formData.teamSize}
+                  onChange={(value) => updateField('teamSize', value)}
+                />
+              )}
 
-            {/* Step 4: Primary Use */}
-            {step === 4 && (
-              <FieldGroup>
-                <div className={cn("grid grid-cols-1 gap-4")}>
-                  {primaryUses.map((use) => (
-                    <button
-                      key={use.id}
-                      type="button"
-                      onClick={() => updateFormData('primaryUse', use.id)}
-                      className={cn(
-                        "text-left p-5 border rounded-lg transition-colors",
-                        formData.primaryUse === use.id
-                          ? "border-black bg-slate-50"
-                          : "border-slate-200 hover:border-slate-300 bg-white"
-                      )}
-                    >
-                      <div className={cn("flex items-start gap-4")}>
-                        <div
-                          className={cn(
-                            "p-2.5 rounded-md",
-                            formData.primaryUse === use.id
-                              ? "bg-black text-white"
-                              : "bg-slate-100 text-slate-600"
-                          )}
-                        >
-                          {use.icon}
-                        </div>
-                        <div className={cn("flex-1")}>
-                          <h3
-                            className={cn(
-                              "font-semibold mb-1 text-base",
-                              formData.primaryUse === use.id
-                                ? "text-slate-900"
-                                : "text-slate-700"
-                            )}
-                          >
-                            {use.title}
-                          </h3>
-                          <p className={cn("text-sm text-slate-500 leading-relaxed")}>
-                            {use.description}
-                          </p>
-                        </div>
-                        {formData.primaryUse === use.id && (
-                          <div className={cn("w-5 h-5 rounded-full border-2 border-black flex items-center justify-center flex-shrink-0 mt-0.5")}>
-                            <div className={cn("w-2 h-2 rounded-full bg-black")} />
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </FieldGroup>
-            )}
+              {step === 3 && (
+                <BusinessDetailsStep
+                  value={formData.businessType}
+                  onChange={(value) => updateField('businessType', value)}
+                />
+              )}
+
+              {step === 4 && (
+                <UseCaseStep
+                  selectedUseCases={formData.primaryUses}
+                  onChange={(useCases) => updateField('primaryUses', useCases)}
+                />
+              )}
+            </div>
 
             {/* Navigation Buttons */}
-            <div className={cn("flex items-center justify-between mt-8 pt-6 border-t border-slate-200")}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-                disabled={step === 1}
-                className={cn("flex items-center gap-2")}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back
-              </Button>
-              <Button
-                type="button"
-                onClick={handleNext}
-                className={cn("w-full max-w-[200px] flex items-center justify-center gap-2 bg-black text-white hover:bg-slate-800 h-11 text-base font-medium")}
-              >
-                {step === 4 ? 'Complete Setup' : 'Next'}
-                {step < 4 && <ChevronRight className="w-4 h-4" />}
-              </Button>
-            </div>
+            <NavigationButtons
+              currentStep={step}
+              totalSteps={TOTAL_STEPS}
+              onBack={handleBack}
+              onNext={handleNext}
+              isLoading={isLoading}
+              nextDisabled={!isStepValid()}
+            />
           </CardContent>
         </Card>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-slate-400 mt-6">
+          You can always update these settings later in your dashboard.
+        </p>
       </div>
     </div>
   );
