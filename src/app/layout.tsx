@@ -15,6 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <script src="http://localhost:5173/src/v1/bot-management" async data-strictness="high" data-presistence="48"/>
       <body
         className={`${fontSans.className} ${fontGeist.className} antialiased`}
       >
