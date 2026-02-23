@@ -64,14 +64,14 @@ const data = {
           url: "/dashboard/bots/logs",
         },
         {
-         title: "Protection Rules", // This is where Whitelist/Custom rules live
-         url: "/dashboard/bots/rules",
+          title: "Protection Rules", // This is where Whitelist/Custom rules live
+          url: "/dashboard/bots/rules",
         },
         {
           title: "Setup & Integration",
           url: "/dashboard/bots/setup",
         },
-        
+
       ],
     },
     {
@@ -81,7 +81,7 @@ const data = {
       items: [
         {
           title: "Watchlist",
-          url: "/dashboard/domains/list",
+          url: "/dashboard/domain-monitoring",
         },
         {
           title: "Typosquatting Alerts",
@@ -106,10 +106,10 @@ const data = {
     },
   ],
   navSecondary: [
-     {
-      title:"Documentation",
-      url:"https://docs.cynoguard.com",
-      icon:BookOpen,
+    {
+      title: "Documentation",
+      url: "https://docs.cynoguard.com",
+      icon: BookOpen,
     },
     {
       title: "Support",
@@ -121,7 +121,7 @@ const data = {
       url: "#",
       icon: Send,
     },
-   
+
   ],
   system: [
     {
@@ -161,11 +161,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent className="overflow-y-auto scrollbar-none">
         <NavGeneralItem groupLabel="General" items={data.general} />
-        <NavItem groupLabel="Products" items={data.navItem} /> 
+        <NavItem groupLabel="Products" items={data.navItem} />
         <NavGeneralItem groupLabel="System" items={data.system} />
       </SidebarContent>
       <SidebarFooter>
-                <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
 
       </SidebarFooter>
     </Sidebar>
