@@ -1,5 +1,5 @@
 // API utilities
-export { ApiError, apiPost, apiGet } from './client';
+export { ApiError, apiPost, apiGet, apiPatch } from './client';
 
 // Onboarding API
 export { submitOnboardingData } from './onboarding';

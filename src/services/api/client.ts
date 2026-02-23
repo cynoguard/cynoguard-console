@@ -70,6 +70,42 @@ export async function apiPost<T>(
     }
 }
 
+export async function apiPatch<T>(
+    endpoint: string,
+    data: unknown
+): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        const text = await response.text();
+        const responseData = isJsonResponse(response) ? safeParseJson(text) : null;
+
+        if (!response.ok) {
+            const message = responseData && typeof responseData === 'object' && 'message' in responseData
+                ? String((responseData as { message: string }).message)
+                : `Request failed with status ${response.status}`;
+
+            throw new ApiError(message, response.status, responseData);
+        }
+
+        return (responseData ?? {}) as T;
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        const message = error instanceof Error ? error.message : 'Network error';
+        throw new ApiError(message, 0);
+    }
+}
+
 export async function apiGet<T>(endpoint: string): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
