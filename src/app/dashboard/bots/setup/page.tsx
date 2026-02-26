@@ -1,56 +1,33 @@
-
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { 
-  Shield, 
-  Key, 
-  CheckCircle, 
-  AlertCircle, 
-  ArrowRight, 
+import {
+  ArrowRight,
+  Check,
+  CheckCircle2,
   Copy,
   Globe,
-  Zap,
-  Lock,
+  Key,
   Settings,
-  Play
+  Terminal,
+  Zap
 } from "lucide-react"
+import { useState } from "react"
 
 const setupSteps = [
-  {
-    id: 1,
-    title: "Generate API Key",
-    description: "Create a unique API key for your application",
-    icon: <Key className="h-5 w-5" />,
-    status: "completed"
-  },
-  {
-    id: 2,
-    title: "Configure Integration",
-    description: "Add the CynoGuard script to your website",
-    icon: <Settings className="h-5 w-5" />,
-    status: "current"
-  },
-  {
-    id: 3,
-    title: "Verify Installation",
-    description: "Test the integration and start monitoring",
-    icon: <CheckCircle className="h-5 w-5" />,
-    status: "pending"
-  }
+  { id: 1, title: "API Key", status: "completed" },
+  { id: 2, title: "Configuration", status: "current" },
+  { id: 3, title: "Verification", status: "pending" }
 ]
 
 export default function BotSetupPage() {
-  const [apiKey, setApiKey] = useState("cg_live_51f2a8b9c4d7e6f3a2b1c9d8e7f6a5b4")
+  const [apiKey] = useState("cg_live_51f2a8b9c4d7e6f3a2b1c9d8e7f6a5b4")
   const [copied, setCopied] = useState(false)
   const [domain, setDomain] = useState("yourdomain.com")
-  const [currentStep, setCurrentStep] = useState(2)
 
   const integrationScript = `<script>
   window.CYNOGUARD_CONFIG = {
@@ -67,198 +44,159 @@ export default function BotSetupPage() {
   })();
 </script>`
 
-  const handleCopyScript = () => {
-    navigator.clipboard.writeText(integrationScript)
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const progressPercentage = (currentStep / setupSteps.length) * 100
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6 bg-white">
-      {/* Header */}
-      <div className="text-center space-y-3 border-b pb-6">
-        <div className="flex justify-center">
-          <div className="h-12 w-12 bg-gray-900 p-3">
-            <Shield className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 p-8 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-zinc-800 rounded-lg border border-zinc-700">
+            <Settings className="h-6 w-6 text-zinc-100" />
           </div>
+          <h1 className="text-3xl font-bold tracking-tight">Setup & Integration</h1>
         </div>
-        <div>
-          <h1 className="text-2xl font-normal">Setup CynoGuard Bot Protection</h1>
-          <p className="text-gray-600 text-sm">
-            Configure your bot detection in 3 simple steps
-          </p>
-        </div>
+        <p className="text-zinc-400 max-w-2xl">
+          Deploy the CynoGuard lightweight detector to your frontend to start analyzing behavioral signals and blocking automated threats in real-time.
+        </p>
       </div>
 
-      {/* Progress */}
-      <div className="border rounded p-4">
-        <h2 className="text-sm font-medium mb-3">Setup Progress</h2>
-        <div className="flex items-center justify-between text-sm mb-2">
-          <span>Step {currentStep} of {setupSteps.length}</span>
-          <span className="font-medium">{Math.round(progressPercentage)}% Complete</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded h-1">
+      {/* Progress Stepper */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {setupSteps.map((step) => (
           <div 
-            className="bg-gray-900 h-1 rounded" 
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-        <div className="grid gap-3 md:grid-cols-3 mt-4">
-          {setupSteps.map((step) => (
-            <div 
-              key={step.id}
-              className={`flex items-center gap-3 p-3 border ${
-                step.status === "completed" ? "bg-white border-gray-300" :
-                step.status === "current" ? "bg-gray-50 border-gray-400" :
-                "bg-white border-gray-200"
-              }`}
-            >
-              <div className={`p-1 ${
-                step.status === "completed" ? "bg-gray-900 text-white" :
-                step.status === "current" ? "bg-gray-700 text-white" :
-                "bg-gray-300 text-gray-600"
-              }`}>
-                {step.icon}
-              </div>
-              <div>
-                <p className="font-medium text-sm">{step.title}</p>
-                <p className="text-xs text-gray-600">{step.description}</p>
-              </div>
+            key={step.id} 
+            className={`relative p-4 rounded-xl border flex items-center gap-4 transition-all ${
+              step.status === 'current' 
+                ? 'bg-zinc-900 border-zinc-500 shadow-[0_0_15px_rgba(255,255,255,0.05)]' 
+                : 'bg-zinc-900/50 border-zinc-800'
+            }`}
+          >
+            <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
+              step.status === 'completed' ? 'bg-green-500 text-black' : 
+              step.status === 'current' ? 'bg-zinc-100 text-black' : 'bg-zinc-800 text-zinc-500'
+            }`}>
+              {step.status === 'completed' ? <Check className="h-4 w-4" /> : step.id}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* API Key Configuration */}
-      <div className="border rounded p-4">
-        <h2 className="text-sm font-medium mb-3 flex items-center gap-2">
-          <Key className="h-4 w-4" />
-          Your API Key
-        </h2>
-        <p className="text-xs text-gray-600 mb-4">
-          Keep this key secure and never share it publicly
-        </p>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Input 
-              value={apiKey} 
-              readOnly 
-              className="font-mono text-sm border-gray-300"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigator.clipboard.writeText(apiKey)}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 border border-green-200">
-              ACTIVE
-            </span>
-            <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 border border-gray-200">
-              GLOBAL ACCESS
-            </span>
-            <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 border border-gray-200">
-              ENCRYPTED
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Integration Script */}
-      <div className="border rounded p-4">
-        <h2 className="text-sm font-medium mb-3 flex items-center gap-2">
-          <Settings className="h-4 w-4" />
-          Integration Script
-        </h2>
-        <p className="text-xs text-gray-600 mb-4">
-          Add this script to &lt;head&gt; section of your website
-        </p>
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="domain" className="text-sm">Domain Name</Label>
-            <Input 
-              id="domain"
-              placeholder="yourdomain.com" 
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              className="font-mono border-gray-300"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label className="text-sm">Generated Script</Label>
-            <div className="relative">
-              <pre className="bg-gray-50 border border-gray-200 p-3 rounded text-xs overflow-x-auto font-mono">
-                {integrationScript}
-              </pre>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={handleCopyScript}
-              >
-                {copied ? "Copied!" : "Copy"}
-              </Button>
+            <div>
+              <p className={`text-sm font-semibold ${step.status === 'pending' ? 'text-zinc-500' : 'text-zinc-100'}`}>
+                {step.title}
+              </p>
             </div>
           </div>
+        ))}
+      </div>
 
-          <div className="bg-gray-50 border border-gray-200 rounded p-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-gray-600 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium mb-2">Installation Instructions</p>
-                <ol className="space-y-1 text-gray-700 list-decimal list-inside text-xs">
-                  <li>Copy script above</li>
-                  <li>Paste it in &lt;head&gt; section of your HTML</li>
-                  <li>Replace "yourdomain.com" with your actual domain</li>
-                  <li>Deploy your changes and wait 2-5 minutes</li>
-                </ol>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Config Forms */}
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="bg-[#09090b] border-zinc-800 text-zinc-100">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Key className="h-5 w-5 text-zinc-400" /> API Credentials
+              </CardTitle>
+              <CardDescription className="text-zinc-500">Your unique public key for client-side signal transmission.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input 
+                    value={apiKey} 
+                    readOnly 
+                    className="bg-zinc-950 border-zinc-800 font-mono text-zinc-300 pr-10"
+                  />
+                  <div className="absolute right-3 top-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  </div>
+                </div>
+                <Button variant="outline" className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800" onClick={() => handleCopy(apiKey)}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
               </div>
-            </div>
+              <div className="flex gap-2">
+                <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Production</Badge>
+                <Badge variant="outline" className="border-zinc-700 text-zinc-400">behavior_write_only</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#09090b] border-zinc-800 text-zinc-100">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Terminal className="h-5 w-5 text-zinc-400" /> Integration Snippet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-zinc-400">Target Domain</Label>
+                <Input 
+                  placeholder="app.example.com" 
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  className="bg-zinc-950 border-zinc-800 text-zinc-100"
+                />
+              </div>
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-zinc-800 to-zinc-700 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                <div className="relative bg-zinc-950 rounded-lg border border-zinc-800 p-4 overflow-hidden">
+                  <pre className="text-xs font-mono text-zinc-400 overflow-x-auto leading-relaxed">
+                    {integrationScript}
+                  </pre>
+                  <Button 
+                    size="sm" 
+                    className="absolute top-3 right-3 bg-zinc-100 text-black hover:bg-zinc-200"
+                    onClick={() => handleCopy(integrationScript)}
+                  >
+                    {copied ? "Copied" : "Copy Code"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Guidance & Actions */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="bg-zinc-950/50 border-zinc-800 border-dashed">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Quick Start Guide</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {[
+                  "Place the snippet inside the <head> tag.",
+                  "Ensure the domain matches your production URL.",
+                  "Trigger a test visit to verify signal reception."
+                ].map((text, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-zinc-300">
+                    <span className="text-zinc-600 font-mono">{i + 1}.</span>
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-4">
+             <Button variant="outline" className="border-zinc-800 bg-zinc-900 py-8 flex flex-col gap-2 h-auto hover:border-zinc-600">
+                <Globe className="h-5 w-5 text-zinc-400" />
+                <span className="text-xs">React SDK</span>
+             </Button>
+             <Button variant="outline" className="border-zinc-800 bg-zinc-900 py-8 flex flex-col gap-2 h-auto hover:border-zinc-600">
+                <Zap className="h-5 w-5 text-zinc-400" />
+                <span className="text-xs">Next.js</span>
+             </Button>
           </div>
-        </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="border rounded p-4">
-        <h2 className="text-sm font-medium mb-3">Quick Actions</h2>
-        <p className="text-xs text-gray-600 mb-4">
-          Common integration methods and tools
-        </p>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Button variant="outline" className="h-16 justify-start">
-            <Globe className="h-4 w-4 mr-2" />
-            WordPress Plugin
-          </Button>
-          <Button variant="outline" className="h-16 justify-start">
-            <Settings className="h-4 w-4 mr-2" />
-            Google Tag Manager
-          </Button>
-          <Button variant="outline" className="h-16 justify-start">
-            <Zap className="h-4 w-4 mr-2" />
-            Segment Integration
-          </Button>
-          <Button variant="outline" className="h-16 justify-start">
-            <Shield className="h-4 w-4 mr-2" />
-            Cloudflare Workers
+          <Button className="w-full bg-white text-black hover:bg-zinc-200 py-6 text-lg font-bold group">
+            Test Connection
+            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
-      </div>
-
-      {/* Next Steps */}
-      <div className="flex items-center justify-between pt-4 border-t">
-        <Button variant="outline" size="lg">
-          Previous Step
-        </Button>
-        <Button size="lg" className="bg-gray-900 hover:bg-gray-800">
-          Test Integration
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
       </div>
     </div>
   )
