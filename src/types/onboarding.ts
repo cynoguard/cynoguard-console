@@ -3,6 +3,10 @@ export interface OnboardingFormData {
     teamSize: string;
     businessType: string;
     primaryUses: string[];
+    projectName: string;
+    primaryDomain: string;
+    environmentType: string;
+    industryNiche: string;
 }
 
 export interface OnboardingApiRequest {
@@ -10,6 +14,10 @@ export interface OnboardingApiRequest {
     teamSize: string;
     businessType: string;
     primaryUses: string[];
+    projectName: string;
+    primaryDomain: string;
+    environmentType: string;
+    industryNiche: string;
 }
 
 export interface OnboardingApiResponse {

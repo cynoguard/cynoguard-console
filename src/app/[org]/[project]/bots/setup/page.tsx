@@ -12,7 +12,6 @@ import {
   Copy,
   Globe,
   Key,
-  Settings,
   Terminal,
   Zap
 } from "lucide-react"
@@ -55,12 +54,10 @@ export default function BotSetupPage() {
       {/* Header Section */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-zinc-800 rounded-lg border border-zinc-700">
-            <Settings className="h-6 w-6 text-zinc-100" />
-          </div>
+        
           <h1 className="text-3xl font-bold tracking-tight">Setup & Integration</h1>
         </div>
-        <p className="text-zinc-400 max-w-2xl">
+        <p className="text-muted-foreground mt-1">
           Deploy the CynoGuard lightweight detector to your frontend to start analyzing behavioral signals and blocking automated threats in real-time.
         </p>
       </div>

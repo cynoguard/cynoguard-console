@@ -1,8 +1,10 @@
+import AppInitializer from "@/components/app-initializer";
+import { Providers } from "@/components/providers";
+import ReduxProvider from "@/components/redux/redux-provider";
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import { fontGeist, fontSans } from "../../public/fonts";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { Toaster } from "@/components/ui/sonner";
 
 
 export const metadata: Metadata = {
@@ -21,10 +23,14 @@ export default function RootLayout({
       <body
         className={`${fontSans.className} ${fontGeist.className} antialiased`}
       >
-        <Providers>
-          {children}
-          <Toaster richColors position="top-right" />
-        </Providers>
+        <ReduxProvider>
+          <AppInitializer>
+            <Providers>
+             {children}
+           <Toaster richColors position="top-right" />
+            </Providers>
+          </AppInitializer>
+        </ReduxProvider>
       </body>
     </html>
   );
