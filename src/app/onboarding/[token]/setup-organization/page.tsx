@@ -1,7 +1,14 @@
 "use client"
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  BusinessDetailsStep,
+  NavigationButtons,
+  OrganizationNameStep,
+  ProgressIndicator,
+  ProjectSetupStep,
+  TeamSizeStep,
+  UseCaseStep,
+} from "@/components/onboarding";
 import {
   Card,
   CardContent,
@@ -10,18 +17,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-  ProgressIndicator,
-  NavigationButtons,
-  OrganizationNameStep,
-  TeamSizeStep,
-  BusinessDetailsStep,
-  UseCaseStep,
-} from "@/components/onboarding";
-import { submitOnboardingData } from "@/services/api";
 import type { OnboardingFormData } from "@/types/onboarding";
+import axios from "axios";
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const stepConfig = {
   1: {
@@ -40,10 +41,15 @@ const stepConfig = {
     title: "Primary Use Cases",
     description: "Select the features you'd like to use",
   },
+  5: {
+    title: "Project Setup",
+    description: "Let's set up your first project",
+  },
 };
 
 const Page = () => {
   const router = useRouter();
+  const {token} = useParams();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
@@ -51,7 +57,18 @@ const Page = () => {
     teamSize: '',
     businessType: '',
     primaryUses: [],
+    projectName: '',
+    primaryDomain: '',
+    environmentType: '',
+    industryNiche: '',
   });
+
+
+  useEffect(()=>{
+    if(!token){
+      sessionStorage.setItem('onboardingToken',token||"");
+    }
+  },[token]);
 
   const currentStepConfig = stepConfig[step as keyof typeof stepConfig];
 
@@ -65,6 +82,10 @@ const Page = () => {
         return formData.businessType.length > 0;
       case 4:
         return formData.primaryUses.length > 0;
+      case 5:
+        return formData.projectName.trim().length > 0 &&
+               formData.primaryDomain.trim().length > 0 &&
+               formData.environmentType.length > 0;
       default:
         return false;
     }
@@ -90,33 +111,33 @@ const Page = () => {
     setIsLoading(true);
 
     const payload = {
-      organizationName: formData.organizationName,
+      name: formData.organizationName.trim().toLowerCase(),
       teamSize: formData.teamSize,
       businessType: formData.businessType,
       primaryUses: formData.primaryUses,
+      projectName: formData.projectName.trim().toLowerCase(),
+      primaryDomain: formData.primaryDomain,
+      environmentType: formData.environmentType,
+      industryNiche: formData.industryNiche,
     };
 
-    // Log the payload for testing/debugging
-    console.log('='.repeat(50));
-    console.log('ONBOARDING FORM SUBMISSION');
-    console.log('='.repeat(50));
-    console.log('Payload:', JSON.stringify(payload, null, 2));
-    console.log('='.repeat(50));
-
     try {
-      const response = await submitOnboardingData(payload);
-      console.log('✅ Onboarding submitted successfully:', response);
+      const response = await axios.put('http://127.0.0.1:4000/api/onboarding/sync',
+       payload,
+       {
+        headers:{
+          Authorization:`Bearer ${token}`,
+        }
+       }
+      );
 
-      // Navigate to dashboard on success
-      router.push('/dashboard');
+      if(response.data.status == "success"){
+        // Navigate to dashboard on success
+        router.push(`/${response.data.data.organization.name}/${response.data.data.project.name}/overview`);
+      }
+
+      
     } catch (error) {
-      console.error('❌ Failed to submit onboarding data:');
-      console.error('Error:', error);
-      console.log('');
-      console.log('📋 Form data that would have been submitted:');
-      console.table(payload);
-      console.log('Primary Uses:', payload.primaryUses);
-
       // Redirect to error page
       router.push('/error/server-unavailable');
     } finally {
@@ -192,6 +213,19 @@ const Page = () => {
                 <UseCaseStep
                   selectedUseCases={formData.primaryUses}
                   onChange={(useCases) => updateField('primaryUses', useCases)}
+                />
+              )}
+
+              {step === 5 && (
+                <ProjectSetupStep
+                  projectName={formData.projectName}
+                  primaryDomain={formData.primaryDomain}
+                  environmentType={formData.environmentType}
+                  industryNiche={formData.industryNiche}
+                  onProjectNameChange={(value) => updateField('projectName', value)}
+                  onPrimaryDomainChange={(value) => updateField('primaryDomain', value)}
+                  onEnvironmentTypeChange={(value) => updateField('environmentType', value)}
+                  onIndustryNicheChange={(value) => updateField('industryNiche', value)}
                 />
               )}
             </div>
