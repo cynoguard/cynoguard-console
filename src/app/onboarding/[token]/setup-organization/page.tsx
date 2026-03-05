@@ -132,8 +132,8 @@ const Page = () => {
       );
 
       if(response.data.status == "success"){
-        // Navigate to dashboard on success
-        router.push(`/${response.data.data.organization.name}/${response.data.data.project.name}/overview`);
+        // validate auth token and set session
+        router.push(`/auth-bridge?token=${response.data.data.auth.token}&org=${response.data.data.organization.name}&project=${response.data.data.project.name}`);
       }
 
       

@@ -1,4 +1,3 @@
-import AppInitializer from "@/components/app-initializer";
 import { Providers } from "@/components/providers";
 import ReduxProvider from "@/components/redux/redux-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -24,12 +23,10 @@ export default function RootLayout({
         className={`${fontSans.className} ${fontGeist.className} antialiased`}
       >
         <ReduxProvider>
-          <AppInitializer>
             <Providers>
              {children}
            <Toaster richColors position="top-right" />
             </Providers>
-          </AppInitializer>
         </ReduxProvider>
       </body>
     </html>

@@ -27,51 +27,69 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from "@/components/ui/sidebar"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
-const data = {
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  const project = localStorage.getItem("activeProject");
+  const organization = localStorage.getItem("organization");
+  const router = useRouter();
+
+  useEffect(()=>{
+    if(!organization){
+      router.push("/organizations");
+    }else if(!project){
+      router.push(`/${organization}/projects`);
+    }
+  },[organization, project, router]);
+
+  
+  const basePath = `/${organization}/${project}`;
+  const data = {
   user: {
     name: "CynoGuard Admin",
     email: "admin@cynoguard.io",
     avatar: "/avatars/admin.jpg",
   },
-  // Main Navigation Group (Non-expandable single items)
+
   general: [
     {
       name: "Global Overview",
-      url: "/dashboard",
+      url: `${basePath}/dashboard`,
       icon: LayoutDashboard,
     },
     {
       name: "System Activity",
-      url: "/dashboard/activity",
+      url: `${basePath}/dashboard/activity`,
       icon: Activity,
     },
   ],
-  // The core modules of the project (Expandable)
+
   navItem: [
     {
       title: "Bot Detection",
       url: "#",
       icon: Bot,
-      isActive: true, // Keep it expanded as you are the leader of this part
+      isActive: true,
       items: [
         {
           title: "Analytics Overview",
-          url: "/dashboard/bots/overview",
+          url: `${basePath}/dashboard/bots/overview`,
         },
         {
           title: "Real-time Logs",
-          url: "/dashboard/bots/logs",
+          url: `${basePath}/dashboard/bots/logs`,
         },
         {
-          title: "Protection Rules", // This is where Whitelist/Custom rules live
-          url: "/dashboard/bots/rules",
+          title: "Protection Rules",
+          url: `${basePath}/dashboard/bots/rules`,
         },
         {
           title: "Setup & Integration",
-          url: "/dashboard/bots/setup",
+          url: `${basePath}/dashboard/bots/setup`,
         },
-
       ],
     },
     {
@@ -81,11 +99,11 @@ const data = {
       items: [
         {
           title: "Watchlist",
-          url: "/dashboard/domain-monitoring",
+          url: `${basePath}/dashboard/domain-monitoring`,
         },
         {
           title: "Typosquatting Alerts",
-          url: "/dashboard/domains/alerts",
+          url: `${basePath}/dashboard/domains/alerts`,
         },
       ],
     },
@@ -96,15 +114,16 @@ const data = {
       items: [
         {
           title: "Brand Mentions",
-          url: "/dashboard/social/feed",
+          url: `${basePath}/dashboard/social/feed`,
         },
         {
           title: "Keywords Config",
-          url: "/dashboard/social/keywords",
+          url: `${basePath}/dashboard/social/keywords`,
         },
       ],
     },
   ],
+
   navSecondary: [
     {
       title: "Documentation",
@@ -121,22 +140,21 @@ const data = {
       url: "#",
       icon: Send,
     },
-
   ],
+
   system: [
     {
       name: "Settings",
-      url: "/dashboard/settings",
+      url: `${basePath}/dashboard/settings`,
       icon: Settings2,
     },
     {
       name: "User Management",
-      url: "/dashboard/users",
+      url: `${basePath}/dashboard/users`,
       icon: Users,
     },
   ],
-}
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+};
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"

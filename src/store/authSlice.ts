@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface AuthState{
     userId:string | null;
     email: string | null;
+    firebaseId:string | null;
     firstName: string | null;
     lastName: string | null;
 }
@@ -11,6 +12,7 @@ interface AuthState{
 
 const initialState:AuthState = {
     userId: null,
+    firebaseId:null,
     email: null,
     firstName: null,
     lastName: null,
