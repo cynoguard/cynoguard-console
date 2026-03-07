@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { mockKeywords } from "@/lib/data/mock-alerts"
-
-/** GET /api/keywords  — mirrors GET /projects/:id/keywords */
+import { mockAlerts } from "@/lib/mock-data"
+import { mockKeywords } from "@/lib/mock-keywords"
+/** GET /api/keywords */
 export async function GET() {
   await new Promise((resolve) => setTimeout(resolve, 400))
-  return NextResponse.json(mockKeywords)
+  return NextResponse.json(mockAlerts)
 }
 
-/** POST /api/keywords  — mirrors POST /projects/:id/keywords */
+/** POST /api/keywords */
 export async function POST(request: Request) {
   const body = await request.json()
   const { value } = body as { value: string }

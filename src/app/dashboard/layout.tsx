@@ -1,6 +1,6 @@
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 
 export default function ConsoleLayout({
   children,
@@ -9,23 +9,21 @@ export default function ConsoleLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-col">
+
+      <AppSidebar />
+
+      <SidebarInset>
 
         {/* Header */}
         <SiteHeader />
 
-        {/* Body */}
-        <div className="flex flex-1">
-
-          <DashboardSidebar />
-
-          {/* FIXED BACKGROUND */}
-          <div className="flex-1 overflow-y-auto bg-background">
-            {children}
-          </div>
-
+        {/* Page Content */}
+        <div className="flex flex-1 flex-col p-6 bg-background">
+          {children}
         </div>
-      </div>
+
+      </SidebarInset>
+
     </SidebarProvider>
   )
 }

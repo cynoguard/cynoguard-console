@@ -1,69 +1,48 @@
-/* ── Social Alert (Mention) types ── */
+export type AlertSeverity = "Critical" | "High" | "Medium" | "Low";
+
+export type AlertSentiment = "positive" | "negative" | "neutral";
 
 export type AlertType =
-  | "keyword_mention"
   | "phishing_link"
   | "impersonation"
+  | "keyword_mention";
 
-export type Platform =
-  | "X"
-  | "REDDIT"
-  | "OTHER"
+export type Platform = "X";
 
-export type Sentiment =
-  | "positive"
-  | "neutral"
-  | "negative"
-
-export type RiskLevel =
-  | "Low"
-  | "Medium"
-  | "High"
-  | "Critical"
-
-export type AlertStatus =
-  | "active"
-  | "resolved"
+export type AlertStatus = "active" | "resolved";
 
 export interface SocialAlert {
-  id: string
-  type: AlertType
-  platform: Platform
-  keyword: string
-  content: string
-  sentiment: Sentiment
-  riskLevel: RiskLevel
-  createdAt: string
-  status: AlertStatus
-  sourceUrl?: string
-  author?: string
+  id: string;
+  type: AlertType;
+  platform: Platform;
+  riskLevel: AlertSeverity;
+  sentiment: AlertSentiment;
+  content: string;
+  author: string;
+  keyword: string;
+  createdAt: string;
+  status: AlertStatus;
+  sourceUrl?: string; // ✅ Added to fix your error
 }
-
-/* ── Dashboard API response ── */
 
 export interface DashboardData {
-  totalMentions: number
-  mentionsToday: number
+  totalMentions: number;
+  mentionsToday: number;
+
   sentiment: {
-    positive: number
-    neutral: number
-    negative: number
-  }
-  platformDistribution: Record<Platform, number>
-  mentionsPerDay: {
-    date: string
-    count: number
-  }[]
-  recentMentions: SocialAlert[]
-}
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
 
-/* ── Keyword types ── */
+  platformDistribution: {
+    X: number;
+  };
 
-export interface Keyword {
-  id: string
-  projectId: string
-  value: string
-  isActive: boolean
-  createdAt: string
-  mentionCount?: number
+  mentionsPerDay: Array<{
+    date: string;
+    mentions: number;
+  }>;
+
+  recentMentions: SocialAlert[];
 }
