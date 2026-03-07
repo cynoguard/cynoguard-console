@@ -9,21 +9,22 @@ export default function ConsoleLayout({
 }) {
   return (
     <SidebarProvider>
+      <div className="flex flex-col w-full min-h-svh">
 
-      <AppSidebar />
-
-      <SidebarInset>
-
-        {/* Header */}
+        {/* Header spans full width across top */}
         <SiteHeader />
 
-        {/* Page Content */}
-        <div className="flex flex-1 flex-col p-6 bg-background">
-          {children}
+        {/* Sidebar + Content side by side below header */}
+        <div className="flex flex-1 overflow-hidden">
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex flex-1 flex-col p-6 bg-background">
+              {children}
+            </div>
+          </SidebarInset>
         </div>
 
-      </SidebarInset>
-
+      </div>
     </SidebarProvider>
   )
 }
