@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 export default function ConsoleLayout({
   children,
@@ -9,22 +9,19 @@ export default function ConsoleLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex flex-col w-full min-h-svh">
+      {/* Sidebar sits on the left, full height, no overlap */}
+      <AppSidebar />
 
-        {/* Header spans full width across top */}
+      {/* Everything to the right of the sidebar */}
+      <SidebarInset>
+        {/* Header is now INSIDE SidebarInset — sits below sidebar header naturally */}
         <SiteHeader />
 
-        {/* Sidebar + Content side by side below header */}
-        <div className="flex flex-1 overflow-hidden">
-          <AppSidebar />
-          <SidebarInset>
-            <div className="flex flex-1 flex-col p-6 bg-background">
-              {children}
-            </div>
-          </SidebarInset>
+        {/* Page content */}
+        <div className="flex flex-1 flex-col p-6 bg-background">
+          {children}
         </div>
-
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }
