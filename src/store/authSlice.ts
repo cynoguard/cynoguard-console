@@ -28,6 +28,9 @@ export const authSlice = createSlice({
         setUserId: (state, action: PayloadAction<string | null>) => {
           state.userId = action.payload;
         },
+         setFirebaseId: (state, action: PayloadAction<string | null>) => {
+          state.firebaseId = action.payload;
+        },
         setEmail: (state, action: PayloadAction<string | null>) => {
             state.email = action.payload;
         },
@@ -41,5 +44,5 @@ export const authSlice = createSlice({
     }
 });
 
-export const {setAuth,setUserId,setEmail,setFirstName,setLastName,clearAuth} = authSlice.actions;
+export const {setAuth,setUserId,setFirebaseId,setEmail,setFirstName,setLastName,clearAuth} = authSlice.actions;
 export default authSlice.reducer;

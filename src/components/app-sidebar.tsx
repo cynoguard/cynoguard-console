@@ -57,12 +57,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   general: [
     {
       name: "Global Overview",
-      url: `${basePath}/dashboard`,
+      url: `${basePath}/overview`,
       icon: LayoutDashboard,
     },
     {
       name: "System Activity",
-      url: `${basePath}/dashboard/activity`,
+      url: `${basePath}/activity`,
       icon: Activity,
     },
   ],
@@ -76,19 +76,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Analytics Overview",
-          url: `${basePath}/dashboard/bots/overview`,
+          url: `${basePath}/bots/overview`,
         },
         {
           title: "Real-time Logs",
-          url: `${basePath}/dashboard/bots/logs`,
+          url: `${basePath}/bots/logs`,
         },
         {
           title: "Protection Rules",
-          url: `${basePath}/dashboard/bots/rules`,
+          url: `${basePath}/bots/rules`,
         },
         {
           title: "Setup & Integration",
-          url: `${basePath}/dashboard/bots/setup`,
+          url: `${basePath}/bots/setup`,
         },
       ],
     },
@@ -99,11 +99,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Watchlist",
-          url: `${basePath}/dashboard/domain-monitoring`,
+          url: `${basePath}/domain-monitoring`,
         },
         {
           title: "Typosquatting Alerts",
-          url: `${basePath}/dashboard/domains/alerts`,
+          url: `${basePath}/domains/alerts`,
         },
       ],
     },
@@ -114,11 +114,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Brand Mentions",
-          url: `${basePath}/dashboard/social/feed`,
+          url: `${basePath}/social/feed`,
         },
         {
           title: "Keywords Config",
-          url: `${basePath}/dashboard/social/keywords`,
+          url: `${basePath}/social/keywords`,
         },
       ],
     },
@@ -145,12 +145,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   system: [
     {
       name: "Settings",
-      url: `${basePath}/dashboard/settings`,
+      url: `${basePath}/settings`,
       icon: Settings2,
     },
     {
       name: "User Management",
-      url: `${basePath}/dashboard/users`,
+      url: `${basePath}/users`,
       icon: Users,
     },
   ],
