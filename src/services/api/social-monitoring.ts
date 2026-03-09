@@ -155,7 +155,7 @@ export async function fetchKeywords(): Promise<BackendKeyword[]> {
 
 /** Add a new keyword */
 export async function addKeyword(keyword: string): Promise<BackendKeyword> {
-  return post<BackendKeyword>("/api/social-monitoring/keywords", { keyword });
+  return post<BackendKeyword>("http://127.0.0.1:4000/api/social-monitoring/keywords", { keyword });
 }
 
 /** Delete a keyword */
