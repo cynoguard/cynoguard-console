@@ -1,7 +1,7 @@
 
 const Page = () => {
-  return (
-    <div>Cynoguard Console</div>
+  return    (
+    <div>Social Feed Page</div>
   )
 }
 
