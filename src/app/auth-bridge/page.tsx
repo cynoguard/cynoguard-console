@@ -1,3 +1,4 @@
+
 import AuthInitializer from "@/components/auth-initializer"
 
 const Page = () => {

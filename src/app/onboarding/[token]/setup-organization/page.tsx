@@ -133,12 +133,15 @@ const Page = () => {
 
       if(response.data.status == "success"){
         // validate auth token and set session
-        router.push(`/auth-bridge?token=${response.data.data.auth.token}&org=${response.data.data.organization.name}&project=${response.data.data.project.name}`);
+        const safeToken = response.data.data.auth.token
+        console.log(response.data.data)
+        router.push(`/auth-bridge?token=${safeToken}&org=${response.data.data.organization.name}&project=${response.data.data.project.name}`);
       }
 
       
     } catch (error) {
       // Redirect to error page
+      console.log(error)
       router.push('/error/server-unavailable');
     } finally {
       setIsLoading(false);

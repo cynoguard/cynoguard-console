@@ -34,7 +34,7 @@ import { useEffect } from "react"
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const project = localStorage.getItem("activeProject");
-  const organization = localStorage.getItem("organization");
+  const organization = localStorage.getItem("activeOrgName");
   const router = useRouter();
 
   useEffect(()=>{
@@ -85,6 +85,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Protection Rules",
           url: `${basePath}/bots/rules`,
+        },
+         {
+          title: "API Keys",
+          url: `${basePath}/bots/api-keys`,
         },
         {
           title: "Setup & Integration",
