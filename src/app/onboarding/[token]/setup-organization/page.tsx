@@ -132,13 +132,16 @@ const Page = () => {
       );
 
       if(response.data.status == "success"){
-        // Navigate to dashboard on success
-        router.push(`/${response.data.data.organization.name}/${response.data.data.project.name}/overview`);
+        // validate auth token and set session
+        const safeToken = response.data.data.auth.token
+        console.log(response.data.data)
+        router.push(`/auth-bridge?token=${safeToken}&org=${response.data.data.organization.name}&project=${response.data.data.project.name}`);
       }
 
       
     } catch (error) {
       // Redirect to error page
+      console.log(error)
       router.push('/error/server-unavailable');
     } finally {
       setIsLoading(false);

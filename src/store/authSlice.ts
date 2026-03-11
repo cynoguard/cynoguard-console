@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface AuthState{
     userId:string | null;
     email: string | null;
+    firebaseId:string | null;
     firstName: string | null;
     lastName: string | null;
 }
@@ -11,6 +12,7 @@ interface AuthState{
 
 const initialState:AuthState = {
     userId: null,
+    firebaseId:null,
     email: null,
     firstName: null,
     lastName: null,
@@ -26,6 +28,9 @@ export const authSlice = createSlice({
         setUserId: (state, action: PayloadAction<string | null>) => {
           state.userId = action.payload;
         },
+         setFirebaseId: (state, action: PayloadAction<string | null>) => {
+          state.firebaseId = action.payload;
+        },
         setEmail: (state, action: PayloadAction<string | null>) => {
             state.email = action.payload;
         },
@@ -39,5 +44,5 @@ export const authSlice = createSlice({
     }
 });
 
-export const {setAuth,setUserId,setEmail,setFirstName,setLastName,clearAuth} = authSlice.actions;
+export const {setAuth,setUserId,setFirebaseId,setEmail,setFirstName,setLastName,clearAuth} = authSlice.actions;
 export default authSlice.reducer;

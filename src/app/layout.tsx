@@ -1,4 +1,3 @@
-import AppInitializer from "@/components/app-initializer";
 import { Providers } from "@/components/providers";
 import ReduxProvider from "@/components/redux/redux-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -19,17 +18,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <script src="http://localhost:5173/src/v1/bot-management" async data-strictness="high" data-presistence="48" />
+      {/* <script src="http://localhost:5173/src/v1/bot-management" async data-strictness="high" data-presistence="48" /> */}
       <body
         className={`${fontSans.className} ${fontGeist.className} antialiased`}
       >
         <ReduxProvider>
-          <AppInitializer>
             <Providers>
              {children}
            <Toaster richColors position="top-right" />
             </Providers>
-          </AppInitializer>
         </ReduxProvider>
       </body>
     </html>
