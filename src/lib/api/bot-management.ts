@@ -54,3 +54,11 @@ export const updateRules = async (payload: {
   const { data } = await apiClient.patch("/api/v1/bot-management/rules", payload);
   return data.data;
 };
+
+
+export const fetchApiKeyMetrics = async (keyId: string, range: OverviewRange = "7d") => {
+  const { data } = await apiClient.get(`/api/v1/bot-management/keys/${keyId}/metrics`, {
+    params: { range },
+  });
+  return data.data;
+};

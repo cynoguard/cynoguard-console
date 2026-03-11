@@ -246,7 +246,7 @@ const Page = () => {
       header: "",
       cell: ({ row }) => (
         <Link
-          href={`/${org}/${project}/bots/overview/${row.original.id}/api-key`}
+          href={`/${org}/${project}/bots/overview/api-key/${row.original.id}`}
           className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors group"
         >
           <span className="hidden md:inline">View Metrics</span>
