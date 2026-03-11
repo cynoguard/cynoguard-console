@@ -62,3 +62,12 @@ export const fetchApiKeyMetrics = async (keyId: string, range: OverviewRange = "
   });
   return data.data;
 };
+
+
+export const fetchGeoDistribution = async (range: OverviewRange = "7d") => {
+  const projectId = getActiveProjectId();
+  const { data } = await apiClient.get("/api/v1/bot-management/geo", {
+    params: { projectId, range },
+  });
+  return data.data;
+};
