@@ -78,6 +78,7 @@ export default function ApiKeysPage() {
       const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-keys/${projectId}/list`);
       if (response.data.status === "success") {
         setApiKeysList(response.data.data);
+        console.log(apiKeysList)
       } else {
         toast.error(response.data.message || "Failed to fetch API keys");
       }

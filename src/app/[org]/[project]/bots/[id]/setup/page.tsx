@@ -62,7 +62,7 @@ export default function BotSetupPage() {
   // New JS Snippet Pattern
   const integrationScript = `<script 
   src="https://secure.cynoguard.com/src/v1/bot-management" 
-  api-key="${apiKey}" 
+  data-api-key="${apiKey}" 
   async 
   data-strictness="high" 
   data-presistence="48" 
@@ -80,7 +80,7 @@ export default function BotSetupPage() {
     // Simulate DB check for incoming session
     const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-key/${id}/connection/status`)
     console.log(response.data.data)
-    if(response.data.success === "success" && response.data.data.connected){
+    if(response.data.status === "success" && response.data.data.connected){
       await axios.put(`http://localhost:4000/api/bot-dtection/api-key/${id}`,{
         status:"connected"
       });
