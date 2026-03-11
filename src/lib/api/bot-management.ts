@@ -71,3 +71,25 @@ export const fetchGeoDistribution = async (range: OverviewRange = "7d") => {
   });
   return data.data;
 };
+
+export const addWhitelistEntry = async (payload: {
+  keyIds: string[];
+  entry:  { name: string; type: string; value: string };
+}) => {
+  const { data } = await apiClient.post(
+    "/api/v1/bot-management/whitelist",
+    payload
+  );
+  return data.data;
+};
+
+export const removeWhitelistEntry = async (payload: {
+  keyId:      string;
+  entryValue: string;
+}) => {
+  const { data } = await apiClient.delete(
+    "/api/v1/bot-management/whitelist",
+    { data: payload }  // axios requires body under `data` key for DELETE
+  );
+  return data.data;
+};
