@@ -23,6 +23,7 @@ import { useEffect, useState } from "react"
 import { NavItem } from "@/components/nav-main"
 import { NavGeneralItem } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
+
 import {
   Sidebar,
   SidebarContent,
@@ -158,6 +159,7 @@ useEffect(() => {
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
+
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold capitalize">{organization}</span>
                   <span className="truncate text-xs text-muted-foreground capitalize">{project}</span>

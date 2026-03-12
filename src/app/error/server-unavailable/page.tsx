@@ -40,7 +40,7 @@ export default function ServerErrorPage() {
                         </div>
                     </div>
 
-                    <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
+                    <CardTitle className="text-2xl font-bold tracking-tight text-white">
                         Server Unavailable
                     </CardTitle>
                 </CardHeader>
