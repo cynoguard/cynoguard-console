@@ -101,9 +101,15 @@
   --sidebar-border: rgba(255,255,255,0.06);
 }
 
-/* ========================================================= */
-/* BASE */
-/* ========================================================= */
+.scrollbar-none {
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari */
+}
 
 @layer base {
   * {
@@ -113,45 +119,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* ========================================================= */
-/* */
-/* ========================================================= */
-
-.dark .text-slate-900,
-.dark .text-slate-800,
-.dark .text-slate-700 {
-  color: #F3F4F6 !important;
-}
-
-.dark .text-slate-600,
-.dark .text-slate-500 {
-  color: #CBD5E1 !important;
-}
-
-.dark .text-slate-400 {
-  color: #9CA3AF !important;
-}
-
-.dark .bg-white,
-.dark .bg-slate-50,
-.dark .bg-slate-100 {
-  background-color: #111111 !important;
-}
-
-.dark .border-slate-200 {
-  border-color: rgba(255,255,255,0.06) !important;
-}
-
-/* ========================================================= */
-/* SCROLLBAR CLEAN */
-/* ========================================================= */
-
-.scrollbar-none {
-  scrollbar-width: none;
-}
-
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import {
   BadgeCheck,
   Bell,
@@ -8,6 +7,7 @@ import {
   LogOut,
   Sparkles
 } from "lucide-react"
+import { useState } from "react"
 
 import {
   Avatar,
@@ -31,6 +31,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { RootState } from "@/store"
+import { useSelector } from "react-redux"
 
 export function NavUser({
   user,
@@ -43,12 +45,14 @@ export function NavUser({
 }) {
 
   const { isMobile } = useSidebar()
+  const authState = useSelector((state:RootState)=>state.auth);
 
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  //! check this
+  // useEffect(() => {
+  //   setMounted(true)
+  // }, [])
 
   if (!mounted) return null
 
@@ -66,10 +70,8 @@ export function NavUser({
             >
 
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
-                  {user.name?.charAt(0) ?? "U"}
-                </AvatarFallback>
+                <AvatarImage src={user.avatar} alt={`${authState.firstName} ${authState.lastName}`} />
+                <AvatarFallback className="rounded-lg">{authState.firstName?.slice(0,2).toUpperCase()}</AvatarFallback>
               </Avatar>
 
             </SidebarMenuButton>
@@ -88,15 +90,13 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {user.name?.charAt(0) ?? "U"}
-                  </AvatarFallback>
+                  <AvatarImage src={user.avatar} alt={`${authState.firstName} ${authState.lastName}`} />
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{`${authState.firstName} ${authState.lastName}`}</span>
+                  <span className="truncate text-xs">{authState.email}</span>
                 </div>
 
               </div>

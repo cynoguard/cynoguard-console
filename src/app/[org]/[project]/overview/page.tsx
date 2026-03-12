@@ -1,7 +1,7 @@
 
 const Page = () => {
   return (
-    <div>Bots Logs Page</div>
+    <div>Page</div>
   )
 }
 
