@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/ui/sidebar"
 import { NavUser } from "./nav-user"
-import HeaderMetrics from "./shared/HeaderMetrics "
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
@@ -21,7 +20,7 @@ export function SiteHeader() {
 };
 
   return (
-    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
+    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b pb-4">
       <div className="flex justify-between h-(--header-height) w-full items-center gap-2 px-4">
         <div className="flex items-center">
           <Button
@@ -47,7 +46,7 @@ export function SiteHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       <Separator orientation="vertical" className="mr-2 h-4" /> */}
-        <HeaderMetrics />
+        {/* <HeaderMetrics /> */}
         </div>
        
         <div className="flex flex-row items-center justify-center gap-4">
