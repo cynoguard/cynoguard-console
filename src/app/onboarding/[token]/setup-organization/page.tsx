@@ -65,8 +65,8 @@ const Page = () => {
 
 
   useEffect(()=>{
-    if(!token){
-      sessionStorage.setItem('onboardingToken',token||"");
+    if(token){
+      sessionStorage.setItem('onboardingToken',token as string);
     }
   },[token]);
 
@@ -131,11 +131,19 @@ const Page = () => {
        }
       );
 
-      if(response.data.status == "success"){
-        // validate auth token and set session
-        const safeToken = response.data.data.auth.token
-        console.log(response.data.data)
-        router.push(`/auth-bridge?token=${safeToken}&org=${response.data.data.organization.name}&project=${response.data.data.project.name}`);
+
+      if (response.data.status === "success") {
+        const { auth, organization, project } = response.data.data;
+
+        // encodeURIComponent prevents + and = chars in JWT from breaking the URL
+        const params = new URLSearchParams({
+          token:     auth.token,
+          org:       organization.name,
+          project:   project.name,
+          projectId: project.id,
+        });
+
+        router.push(`/auth-bridge?${params.toString()}`);
       }
 
       
