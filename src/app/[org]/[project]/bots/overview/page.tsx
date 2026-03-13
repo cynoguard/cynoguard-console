@@ -50,7 +50,8 @@ type ApiKeyRow = {
 
 // ── Transformers ───────────────────────────────────────
 const transformChartData = (raw: ChartRow[]) => {
-  const map: Record<string, Record<string, number>> = {};
+  // TODO: type safety - temporary any for build stability
+  const map: Record<string, any> = {};
   raw.forEach(({ date, action, count }) => {
     const d = new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     if (!map[d]) map[d] = { date: d, allow: 0, challenge: 0, uncertain: 0 };

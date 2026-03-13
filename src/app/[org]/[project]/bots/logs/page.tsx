@@ -366,7 +366,9 @@ export default function LogsPage() {
 
   const handleSearch = (val: string) => {
     setSearch(val);
-    clearTimeout(searchTimeout.current);
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
     searchTimeout.current = setTimeout(
       () => loadLogs(1, val, actionFilter),
       400,
