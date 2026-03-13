@@ -6,6 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth"
 import {
   BookOpen,
   Bot,
+  ChartArea,
   Command,
   Globe,
   LayoutDashboard,
@@ -130,10 +131,11 @@ useEffect(() => {
     },
   ]
 
-  const generalItems = [
-    { name: "Overview",  url: `${basePath}/overview`, icon: LayoutDashboard },
-    { name: "Projects",  url: `/${organization}/projects`, icon: Projector },
-  ]
+ const generalItems = [
+  { name: "Overview",     url: `/${organization}/overview`,         icon: LayoutDashboard },
+  { name: "Project Overview", url: `${basePath}/overview`,              icon: ChartArea },
+  { name: "Projects",         url: `/${organization}/projects`,         icon: Projector },
+]
 
   const systemItems = [
     { name: "Settings",         url: `${basePath}/settings`, icon: Settings2 },

@@ -69,7 +69,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
           const idToken = await user.getIdToken();
 
           const res = await axios.get(
-            `http://127.0.0.1:4000/api/auth/user?orgName=${organization}`,
+            `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
             { headers: { Authorization: `Bearer ${idToken}` } }
           );
 

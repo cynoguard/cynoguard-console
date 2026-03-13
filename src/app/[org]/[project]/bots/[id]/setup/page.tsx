@@ -61,7 +61,7 @@ export default function BotSetupPage() {
   },[apiKey, id, router])
   // New JS Snippet Pattern
   const integrationScript = `<script 
-  src="https://secure.cynoguard.com/src/v1/bot-management" 
+  src="https://cdn.cynoguard.com/v1/cyno-shield.js" 
   data-api-key="${apiKey}" 
   async 
   data-strictness="high" 

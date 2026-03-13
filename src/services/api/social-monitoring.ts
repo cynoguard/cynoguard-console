@@ -1,7 +1,7 @@
 import { getActiveProjectId } from "@/lib/api/bot-management";
 
 // src/services/api/social-monitoring.ts
-const BASE = "http://localhost:4000";
+const BASE = "https://api.cynoguard.com/";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
