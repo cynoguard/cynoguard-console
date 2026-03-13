@@ -102,9 +102,9 @@ export default function AppInitializer({ children }: { children: React.ReactNode
           apiCallStateRef.current = "idle";
 
           // If auth fails on a protected route, redirect to login
-          if (!pathname.startsWith("/auth-bridge") && !pathname.startsWith("/onboarding")) {
-            router.push("/sign-in");
-          }
+          // if (!pathname.startsWith("/auth-bridge") && !pathname.startsWith("/onboarding")) {
+          //   router.push("/sign-in");
+          // }
         } finally {
           setLoading(false);
         }

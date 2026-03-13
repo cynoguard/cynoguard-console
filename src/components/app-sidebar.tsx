@@ -73,7 +73,7 @@ useEffect(() => {
 
           const idToken = await user.getIdToken()
           const res = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user?orgName=${organization}`,
+            `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
             { headers: { Authorization: `Bearer ${idToken}` } }
           )
           const orgData = res.data?.data?.org_member_info?.organization
@@ -138,13 +138,13 @@ useEffect(() => {
 ]
 
   const systemItems = [
-    { name: "Settings",         url: `${basePath}/settings`, icon: Settings2 },
+    { name: "Settings",         url: `/${organization}/settings`, icon: Settings2 },
     { name: "User Management",  url: `${basePath}/users`,    icon: Users },
   ]
 
   const secondaryItems = [
     { title: "Documentation", url: "https://docs.cynoguard.com", icon: BookOpen },
-    { title: "Support",       url: "#", icon: LifeBuoy },
+    { title: "Support",       url: "https://cynoguard.com/support", icon: LifeBuoy },
     { title: "Feedback",      url: "#", icon: Send },
   ]
 

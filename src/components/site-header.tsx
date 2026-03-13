@@ -11,14 +11,6 @@ import { NavUser } from "./nav-user"
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
 
-  const data = {
-  user: {
-    name: "CynoGuard Admin",
-    email: "admin@cynoguard.io",
-    avatar: "/avatars/admin.jpg",
-  },
-};
-
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b py-4">
       <div className="flex justify-between h-(--header-height) w-full items-center gap-2 px-4">
@@ -52,7 +44,7 @@ export function SiteHeader() {
         <div className="flex flex-row items-center justify-center gap-4">
           <SearchForm className="w-full sm:ml-auto sm:w-auto" />
           <div className="max-w-2xl">
-          <NavUser user={data.user} />
+           <NavUser/>
           </div>
         </div>
         
