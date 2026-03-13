@@ -1,233 +1,221 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import type { SocialAlert } from "@/lib/types/social-alert"
-import { updateMentionStatus } from "@/services/api/social-monitoring"
-import { useToast } from "@/hooks/use-toast"
-
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Dialog, DialogContent, DialogHeader,
-  DialogTitle, DialogDescription,
-} from "@/components/ui/dialog"
-
-import { Link2, UserX, Hash, Clock, User } from "lucide-react"
-import { FaXTwitter } from "react-icons/fa6"
-
-interface ThreatFeedProps {
-  alerts?: SocialAlert[]
-  loading?: boolean
-}
-
-const riskStyles: Record<string, string> = {
-  Critical: "bg-red-500/20 text-red-400 border-red-500/40",
-  High:     "bg-orange-500/20 text-orange-400 border-orange-500/40",
-  Medium:   "bg-yellow-500/20 text-yellow-400 border-yellow-500/40",
-  Low:      "bg-green-500/20 text-green-400 border-green-500/40",
-}
+  fetchMentions, updateMentionStatus,
+  type BrandMention, type MentionStatus, type RiskLevel, type Sentiment,
+} from '@/services/api/social-monitoring';
+import { RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { FaXTwitter } from 'react-icons/fa6';
 
 const sentimentStyles: Record<string, string> = {
-  positive: "bg-green-500/20 text-green-400 border-green-500/40",
-  neutral:  "bg-gray-500/20 text-gray-300 border-gray-500/40",
-  negative: "bg-red-500/20 text-red-400 border-red-500/40",
-}
+  POSITIVE: 'bg-green-500/10 text-green-400 border-green-500/30',
+  NEUTRAL:  'bg-muted/50 text-muted-foreground border-border',
+  NEGATIVE: 'bg-red-500/10 text-red-400 border-red-500/30',
+};
 
-const typeIcons: Record<string, any> = {
-  phishing_link:    Link2,
-  impersonation:    UserX,
-  keyword_mention:  Hash,
-}
+const riskStyles: Record<string, string> = {
+  LOW:    'bg-green-500/10 text-green-400 border-green-500/30',
+  MEDIUM: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+  HIGH:   'bg-orange-500/10 text-orange-400 border-orange-500/30',
+};
 
-export function ThreatFeed({ alerts = [], loading = false }: ThreatFeedProps) {
-  const [alertList, setAlertList] = useState<SocialAlert[]>(alerts)
-  const [selectedAlert, setSelectedAlert] = useState<SocialAlert | null>(null)
-  const { toast } = useToast()
+export default function FeedPage() {
+  const [mentions,        setMentions]        = useState<BrandMention[]>([]);
+  const [total,           setTotal]           = useState(0);
+  const [loading,         setLoading]         = useState(true);
+  const [riskFilter,      setRiskFilter]      = useState('ALL');
+  const [sentimentFilter, setSentimentFilter] = useState('ALL');
+  const [statusFilter,    setStatusFilter]    = useState('ALL');
+  const { toast } = useToast();
 
-  // Sync when parent passes new alerts
-  if (alerts !== alertList && alerts.length > 0 && alertList.length === 0) {
-    setAlertList(alerts)
-  }
-
-  async function handleResolve(alert: SocialAlert) {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
-      await updateMentionStatus(alert.id, "DISMISSED")
-      setAlertList((prev) =>
-        prev.map((a) => a.id === alert.id ? { ...a, status: "resolved" } : a)
-      )
-      toast({ title: "Resolved", description: "Alert marked as resolved." })
+      const res = await fetchMentions({
+        limit:     50,
+        riskLevel: riskFilter      !== 'ALL' ? riskFilter      as RiskLevel     : undefined,
+        sentiment: sentimentFilter !== 'ALL' ? sentimentFilter as Sentiment     : undefined,
+        status:    statusFilter    !== 'ALL' ? statusFilter    as MentionStatus : undefined,
+      });
+      setMentions(res.data);
+      setTotal(res.pagination.total);
     } catch {
-      toast({ title: "Error", description: "Failed to resolve alert.", variant: "destructive" })
+      toast({ title: 'Error', description: 'Failed to load mentions.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  }, [riskFilter, sentimentFilter, statusFilter, toast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleResolve(mentionId: string) {
+    try {
+      await updateMentionStatus(mentionId, 'DISMISSED');
+      setMentions((prev) =>
+        prev.map((m) => m.id === mentionId ? { ...m, status: 'DISMISSED' } : m)
+      );
+      toast({ title: 'Resolved', description: 'Mention marked as dismissed.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update mention.', variant: 'destructive' });
     }
   }
 
-  const activeAlerts = alertList.filter((a) => a.status === "active")
-  const resolvedAlerts = alertList.filter((a) => a.status === "resolved")
-  const criticalCount = activeAlerts.filter((a) => a.riskLevel === "Critical").length
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">Threat Feed</h2>
-          <p className="text-sm text-muted-foreground">Loading alerts...</p>
-        </div>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full rounded-xl" />
-        ))}
-      </div>
-    )
-  }
+  const byRisk = (level: string) => mentions.filter((m) => m.riskLevel === level).length;
 
   return (
-    <>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold">Threat Feed</h2>
-        <p className="text-sm text-muted-foreground">
-          {activeAlerts.length} active alerts{" "}
-          {criticalCount > 0 && (
-            <span className="font-medium text-red-400">{criticalCount} critical</span>
-          )}
-        </p>
-      </div>
+    <div className="min-h-screen bg-background px-6 py-8">
+      <div className="mx-auto max-w-7xl space-y-8">
 
-      <div className="space-y-6 max-h-[520px] overflow-y-auto pr-2">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Mentions & Alerts</h1>
+          <p className="text-sm text-muted-foreground">
+            Review social media mentions, phishing attempts, and brand impersonation alerts.
+          </p>
+        </div>
 
-        {activeAlerts.length === 0 && (
-          <Card className="p-8 text-center text-muted-foreground">
-            No active alerts. Upgrade X API plan to start monitoring.
-          </Card>
-        )}
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={riskFilter} onValueChange={setRiskFilter}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Risk Level" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Risk Levels</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="LOW">Low</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {activeAlerts.map((alert) => {
-          const Icon = typeIcons[alert.type] ?? Hash
-          return (
-            <Card key={alert.id} className="relative rounded-xl p-6 hover:border-primary/40 transition-all">
-              <div className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${
-                alert.riskLevel === "Critical" ? "bg-red-500" :
-                alert.riskLevel === "High"     ? "bg-orange-500" :
-                alert.riskLevel === "Medium"   ? "bg-yellow-500" : "bg-green-500"
-              }`} />
+          <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Sentiment" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Sentiment</SelectItem>
+              <SelectItem value="NEGATIVE">Negative</SelectItem>
+              <SelectItem value="NEUTRAL">Neutral</SelectItem>
+              <SelectItem value="POSITIVE">Positive</SelectItem>
+            </SelectContent>
+          </Select>
 
-              <div className="flex items-start justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-semibold capitalize">{alert.type.replace("_", " ")}</h3>
-                    <Badge className={`border ${riskStyles[alert.riskLevel]}`}>{alert.riskLevel}</Badge>
-                    <Badge className={`border ${sentimentStyles[alert.sentiment]}`}>{alert.sentiment}</Badge>
-                  </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="NEW">New</SelectItem>
+              <SelectItem value="VIEWED">Viewed</SelectItem>
+              <SelectItem value="DISMISSED">Dismissed</SelectItem>
+              <SelectItem value="ARCHIVED">Archived</SelectItem>
+            </SelectContent>
+          </Select>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed">{alert.content}</p>
+          <Button variant="outline" size="sm" onClick={load}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+        </div>
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
-                    <div className="flex items-center gap-1.5">
-                      <FaXTwitter className="h-3.5 w-3.5" />
-                      {alert.platform}
-                    </div>
-                    <span>•</span>
-                    <span className="font-medium text-foreground/80">{alert.author}</span>
-                    {alert.keyword && <><span>•</span><span>{alert.keyword}</span></>}
-                    <span>•</span>
-                    <span>{alert.createdAt}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedAlert(alert)}>Details</Button>
-                  <Button size="sm" onClick={() => handleResolve(alert)}>Resolve</Button>
-                </div>
-              </div>
-            </Card>
-          )
-        })}
-
-        {resolvedAlerts.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase text-muted-foreground">Resolved Alerts</h3>
-            {resolvedAlerts.map((alert) => {
-              const Icon = typeIcons[alert.type] ?? Hash
-              return (
-                <Card key={alert.id} className="p-6 opacity-50 grayscale">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <h3 className="font-semibold capitalize">{alert.type.replace("_", " ")}</h3>
-                    <Badge variant="outline">Resolved</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{alert.content}</p>
-                </Card>
-              )
-            })}
+        {/* Table */}
+        <Card className="overflow-hidden border border-border">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <h3 className="text-sm font-semibold">
+              Recent Mentions
+              <span className="ml-2 text-xs text-muted-foreground">{total} total</span>
+            </h3>
           </div>
-        )}
-      </div>
 
-      {/* Detail Modal */}
-      <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && setSelectedAlert(null)}>
-        <DialogContent className="max-w-lg rounded-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <DialogTitle className="capitalize">
-                {selectedAlert?.type.replace("_", " ")}
-              </DialogTitle>
-              {selectedAlert && (
-                <Badge className={`border ${riskStyles[selectedAlert.riskLevel]}`}>
-                  {selectedAlert.riskLevel}
-                </Badge>
-              )}
+          {loading ? (
+            <div className="space-y-2 p-6">
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
-            <DialogDescription>Investigation information</DialogDescription>
-          </DialogHeader>
-
-          {selectedAlert && (
-            <div className="space-y-5">
-              <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed">
-                {selectedAlert.content}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {[
-                  { icon: FaXTwitter, label: "Platform", value: selectedAlert.platform },
-                  { icon: Hash, label: "Keyword", value: selectedAlert.keyword || "—" },
-                  { icon: Clock, label: "Detected", value: selectedAlert.createdAt },
-                  { icon: User, label: "Author", value: selectedAlert.author },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase text-muted-foreground">{label}</p>
-                      <p className="font-medium">{value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <Badge className={`border ${sentimentStyles[selectedAlert.sentiment]}`}>
-                  {selectedAlert.sentiment}
-                </Badge>
-                <Badge variant="outline">{selectedAlert.status}</Badge>
-              </div>
-
-              {selectedAlert.sourceUrl && (
-                <Button variant="outline" className="w-full" asChild>
-                  <a href={selectedAlert.sourceUrl} target="_blank" rel="noopener noreferrer">
-                    View Original Post
-                  </a>
-                </Button>
-              )}
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead>Content</TableHead>
+                    <TableHead>Risk</TableHead>
+                    <TableHead>Sentiment</TableHead>
+                    <TableHead>Keyword</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mentions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">
+                        No mentions found. Add keywords and trigger a scan to start fetching data.
+                      </TableCell>
+                    </TableRow>
+                  ) : mentions.map((m) => (
+                    <TableRow key={m.id} className="hover:bg-muted/40">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FaXTwitter className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{m.platform}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">@{m.authorUsername}</TableCell>
+                      <TableCell className="max-w-xs truncate text-sm text-muted-foreground">{m.content}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={riskStyles[m.riskLevel]}>
+                          {m.riskLevel}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={sentimentStyles[m.sentiment]}>
+                          {m.sentiment.toLowerCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{m.matchedKeyword ?? '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(m.publishedAt ?? m.scannedAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {m.status !== 'DISMISSED' && m.status !== 'ARCHIVED' ? (
+                          <Button size="sm" variant="outline" onClick={() => handleResolve(m.id)}>
+                            Resolve
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {m.status.toLowerCase()}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+        </Card>
+
+        {/* Insights */}
+        <Card className="p-6 border border-border">
+          <h2 className="mb-6 text-xl font-semibold">Alert Insights</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Total Alerts', value: total,           color: '' },
+              { label: 'High Risk',    value: byRisk('HIGH'),   color: 'text-orange-400' },
+              { label: 'Medium Risk',  value: byRisk('MEDIUM'), color: 'text-yellow-400' },
+              { label: 'Low Risk',     value: byRisk('LOW'),    color: 'text-green-400' },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-border p-4">
+                <p className="text-sm text-muted-foreground">{item.label}</p>
+                <p className={`mt-1 text-2xl font-semibold ${item.color}`}>{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+      </div>
+    </div>
+  );
 }

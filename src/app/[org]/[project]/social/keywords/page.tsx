@@ -1,8 +1,12 @@
 'use client';
 
 import { KeywordManager } from '@/components/dashboard/keyword-manager';
+import { getActiveProjectId } from '@/lib/api/bot-management';
 
 export default function KeywordsPage() {
+
+  const projectId = getActiveProjectId() as string;
+  
   return (
     <div className="min-h-screen bg-background px-6 py-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -22,7 +26,7 @@ export default function KeywordsPage() {
         </div>
 
         {/* Keyword Manager Component */}
-        <KeywordManager />
+        <KeywordManager projectId={projectId} />
 
       </div>
     </div>

@@ -42,15 +42,13 @@ export function NavItem({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <Collapsible>
-
               {/* Parent button */}
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton className="justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <item.icon />
+                  <div className="flex items-center gap-2 text-sm">
+                    <item.icon  className="h-4 w-4"/>
                     <span>{item.title}</span>
                   </div>
-
                   {item.items && <ChevronRight className="h-4 w-4" />}
                 </SidebarMenuButton>
               </CollapsibleTrigger>

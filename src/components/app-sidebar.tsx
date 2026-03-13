@@ -123,6 +123,7 @@ useEffect(() => {
       url: "#",
       icon: Search,
       items: [
+        { title: "Overview",  url: `${basePath}/social/overview` },
         { title: "Brand Mentions",  url: `${basePath}/social/feed` },
         { title: "Keywords Config", url: `${basePath}/social/keywords` },
       ],
