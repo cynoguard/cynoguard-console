@@ -10,7 +10,7 @@ Cynoguard Console is a robust tool designed to enhance the security and manageme
 - **Custom Dashboards**: Create dashboards tailored to your specific needs.
 
 ## Tech Stack
-- **Frontend**: React.js, Redux
+- **Frontend**: React.js, Redux, Next Js
 - **Backend**: Node.js, Express
 - **Database**: MongoDB
 - **DevOps**: Docker, Kubernetes
