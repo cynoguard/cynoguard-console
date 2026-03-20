@@ -5,19 +5,23 @@ import { AppDistpatch, RootState } from "@/store";
 import { clearAuth, setAuth } from "@/store/authSlice";
 import axios from "axios";
 import { onAuthStateChanged } from "firebase/auth";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export default function AppInitializer({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch<AppDistpatch>();
-  const authState = useSelector((state:RootState)=>state.auth);
-  const params = useParams();
-  const pathname = usePathname();
+  const dispatch   = useDispatch<AppDistpatch>();
+  const authState  = useSelector((state: RootState) => state.auth);
+  const params     = useParams();
+  const pathname   = usePathname();
+  const router     = useRouter();
   const [loading, setLoading] = useState(true);
-  
+
   const apiCallStateRef = useRef<"idle" | "pending" | "done">("idle");
-  const organization = params?.organization || pathname.split("/")[1];
+
+  // Resolve org + project from URL params
+  const organization  = (params?.organization as string) || pathname.split("/")[1];
+  const projectName   = (params?.project as string)      || pathname.split("/")[2];
 
   // Step 1: Restore Redux from localStorage on mount
   useEffect(() => {
@@ -28,15 +32,13 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         setLoading(false);
         return;
       }
-    } catch (error) {
-      console.error("Failed to restore auth from localStorage:", error);
+    } catch {
+      // corrupt storage — continue to Firebase flow
     }
-
-    // If no saved auth, continue with normal flow
     setLoading(false);
   }, [dispatch]);
 
-  // Step 2: Persist Redux to localStorage whenever it changes
+  // Step 2: Persist Redux to localStorage on change
   useEffect(() => {
     if (authState.userId) {
       localStorage.setItem("auth", JSON.stringify(authState));
@@ -45,7 +47,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
     }
   }, [authState]);
 
-  // Step 3: Sync with Firebase if needed
+  // Step 3: Sync with Firebase + backend if Redux is empty
   useEffect(() => {
     if (authState.userId) {
       setLoading(false);
@@ -60,32 +62,53 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         return;
       }
 
-      if (user && organization && apiCallStateRef.current === "idle") {
+      if (organization && apiCallStateRef.current === "idle") {
         apiCallStateRef.current = "pending";
-        
+
         try {
-          const token = await user.getIdToken();
-          console.log("Fetching data for:", organization);
-          
+          const idToken = await user.getIdToken();
+
           const res = await axios.get(
-            `http://127.0.0.1:4000/api/auth/user?orgName=${organization}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
+            { headers: { Authorization: `Bearer ${idToken}` } }
           );
 
-          const userData = res.data.data.org_member_info.user;
-          dispatch(setAuth({ userId: userData.id, ...userData }));
-          apiCallStateRef.current = "done";
+          const { user: userData, organization: orgData } =
+            res.data.data.org_member_info;
 
+          // ── Set Redux auth state ──────────────────────────
+          dispatch(setAuth({ userId: userData.id, ...userData }));
+
+          // ── Persist org info ──────────────────────────────
+          localStorage.setItem("organization", orgData.name);
+          localStorage.setItem("organizationId", orgData.id);
+
+          // ── Resolve active project ────────────────────────
+          // Priority: URL param → first project in org
+          const projects: { id: string; name: string }[] = orgData.projects ?? [];
+
+          const activeProject =
+            projects.find((p) => p.name === projectName) ?? projects[0];
+
+          if (activeProject) {
+            localStorage.setItem("activeProject",   activeProject.name);
+            localStorage.setItem("activeProjectId", activeProject.id);   // ← what API calls use
+          }
+
+          apiCallStateRef.current = "done";
         } catch (error) {
           console.error("Backend fetch failed:", error);
           dispatch(clearAuth());
           apiCallStateRef.current = "idle";
+
+          // If auth fails on a protected route, redirect to login
+          // if (!pathname.startsWith("/auth-bridge") && !pathname.startsWith("/onboarding")) {
+          //   router.push("/sign-in");
+          // }
         } finally {
           setLoading(false);
         }
-      } else if (user && !organization) {
+      } else if (!organization) {
         setLoading(false);
       }
     });
@@ -94,7 +117,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
       unsubscribe();
       apiCallStateRef.current = "idle";
     };
-  }, [authState.userId, dispatch, organization]);
+  }, [authState.userId, dispatch, organization, pathname, projectName, router]);
 
   if (loading) {
     return (

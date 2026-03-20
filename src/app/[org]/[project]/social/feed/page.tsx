@@ -1,8 +1,17 @@
+'use client';
 
-const Page = () => {
-  return    (
-    <div>Social Feed Page</div>
-  )
+import FeedPage from "@/components/dashboard/threat-feed";
+
+
+
+
+export default function Feed() {
+  return (
+  <>
+   {/* Keyword Manager Component */}
+        <FeedPage />
+  </>
+       
+
+  );
 }
-
-export default Page

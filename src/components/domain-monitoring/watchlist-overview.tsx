@@ -1,26 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { formatDistanceToNow, format } from "date-fns";
-import { toast } from "sonner";
+import { format, formatDistanceToNow } from "date-fns";
 import {
-    Globe,
-    Plus,
-    Play,
-    Pause,
-    RotateCcw,
-    Search,
     AlertTriangle,
     CheckCircle2,
+    Globe,
     Loader2,
-    ShieldAlert,
+    Pause,
+    Play,
+    Plus,
     RefreshCw,
+    RotateCcw,
+    Search,
+    ShieldAlert,
 } from "lucide-react";
+import Link from "next/link";
+import { useState, useSyncExternalStore } from "react";
+import { toast } from "sonner";
 
-import { useWatchlist, useToggleActive, useTriggerScan } from "@/hooks/use-domain-monitoring";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -37,8 +36,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AddDomainDialog } from "./add-domain-dialog";
+import { useToggleActive, useTriggerScan, useWatchlist } from "@/hooks/use-domain-monitoring";
 import type { WatchlistEntry } from "@/types/domain-monitoring";
+import { AddDomainDialog } from "./add-domain-dialog";
 
 // ── Status Helpers ──────────────────────────────────────────────────
 
@@ -84,6 +84,12 @@ function ActiveBadge({ active }: { active: boolean }) {
             Paused
         </Badge>
     );
+}
+
+const emptySubscribe = () => () => {};
+
+function useIsClient() {
+    return useSyncExternalStore(emptySubscribe, () => true, () => false);
 }
 
 // ── Row Actions ─────────────────────────────────────────────────────
@@ -209,6 +215,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 export function WatchlistOverview() {
     const { data: watchlist, isLoading, isError, refetch } = useWatchlist();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const isClient = useIsClient();
 
     return (
         <div className="space-y-6">
@@ -267,7 +274,7 @@ export function WatchlistOverview() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="min-w-[200px]">Domain</TableHead>
+                                    <TableHead className="min-w-50">Domain</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="hidden md:table-cell">Last Scan</TableHead>
                                     <TableHead className="hidden lg:table-cell">Next Run</TableHead>
@@ -290,7 +297,7 @@ export function WatchlistOverview() {
                                                 {entry.officialDomainNormalized}
                                             </Link>
                                             {entry.officialDomainRaw !== entry.officialDomainNormalized && (
-                                                <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+                                                <p className="text-xs text-muted-foreground truncate max-w-45">
                                                     {entry.officialDomainRaw}
                                                 </p>
                                             )}
@@ -300,36 +307,44 @@ export function WatchlistOverview() {
                                         </TableCell>
                                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                                             {entry.lastScanAt ? (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger className="cursor-default">
-                                                            {formatDistanceToNow(new Date(entry.lastScanAt), {
-                                                                addSuffix: true,
-                                                            })}
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            {format(new Date(entry.lastScanAt), "PPpp")}
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+                                                isClient ? (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger className="cursor-default">
+                                                                {formatDistanceToNow(new Date(entry.lastScanAt), {
+                                                                    addSuffix: true,
+                                                                })}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {format(new Date(entry.lastScanAt), "PPpp")}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                ) : (
+                                                    <span className="text-muted-foreground/60">...</span>
+                                                )
                                             ) : (
                                                 <span className="text-muted-foreground/60">Never</span>
                                             )}
                                         </TableCell>
                                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                                             {entry.nextRunAt ? (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger className="cursor-default">
-                                                            {formatDistanceToNow(new Date(entry.nextRunAt), {
-                                                                addSuffix: true,
-                                                            })}
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            {format(new Date(entry.nextRunAt), "PPpp")}
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+                                                isClient ? (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger className="cursor-default">
+                                                                {formatDistanceToNow(new Date(entry.nextRunAt), {
+                                                                    addSuffix: true,
+                                                                })}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {format(new Date(entry.nextRunAt), "PPpp")}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                ) : (
+                                                    <span className="text-muted-foreground/60">...</span>
+                                                )
                                             ) : (
                                                 <span className="text-muted-foreground/60">—</span>
                                             )}

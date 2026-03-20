@@ -7,15 +7,11 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "Cynoguard Console",
+  title: "CynoGuard Console",
   description: "Cybersecurity platform for monitoring and protecting digital assets.",
-};
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       {/* <script src="http://localhost:5173/src/v1/bot-management" async data-strictness="high" data-presistence="48" /> */}

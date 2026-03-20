@@ -5,21 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet, SheetContent, SheetDescription,
-  SheetHeader, SheetTitle, SheetTrigger,
+    Sheet, SheetContent, SheetDescription,
+    SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import { fetchDetectionLogs, fetchGeoDistribution, type OverviewRange } from "@/lib/api/bot-management";
 import { NUMERIC_TO_ALPHA2 } from "@/lib/iso-numeric-map";
 import {
-  ColumnDef, flexRender,
-  getCoreRowModel, useReactTable,
+    ColumnDef, flexRender,
+    getCoreRowModel, useReactTable,
 } from "@tanstack/react-table";
 import {
-  Activity, Bot, ChevronLeft, ChevronRight,
-  Cpu, ExternalLink, Fingerprint,
-  Globe, Monitor, RefreshCw,
-  Search, Shield, ShieldAlert,
-  Smartphone, Tablet, Wifi, X,
+    Activity, Bot, ChevronLeft, ChevronRight,
+    Cpu, ExternalLink, Fingerprint,
+    Globe, Monitor, RefreshCw,
+    Search, Shield, ShieldAlert,
+    Smartphone, Tablet, Wifi, X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -322,7 +322,7 @@ export default function LogsPage() {
   const [search,       setSearch]       = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [range,        setRange]        = useState<OverviewRange>("7d");
-  const searchTimeout = useRef<NodeJS.Timeout>(null);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // ── Data loaders ───────────────────────────────────
   const loadLogs = useCallback(async (
@@ -366,7 +366,9 @@ export default function LogsPage() {
 
   const handleSearch = (val: string) => {
     setSearch(val);
-    clearTimeout(searchTimeout.current);
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
     searchTimeout.current = setTimeout(
       () => loadLogs(1, val, actionFilter),
       400,

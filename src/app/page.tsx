@@ -1,8 +1,5 @@
+import { redirect } from "next/navigation"
 
-const Page = () => {
-  return (
-    <div>Cynoguard Console</div>
-  )
+export default function Home() {
+  redirect("/dashboard")
 }
-
-export default Page

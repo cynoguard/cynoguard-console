@@ -1,8 +1,5 @@
+import { redirect } from "next/navigation"
 
-const Page = () => {
-  return (
-    <div>dashboard</div>
-  )
+export default function DashboardPage() {
+  redirect("/dashboard/social")
 }
-
-export default Page

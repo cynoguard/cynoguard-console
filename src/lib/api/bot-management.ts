@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
+const BASE_URL = "https://api.cynoguard.com";
 
 // No auth interceptor — dashboard is protected by layout.tsx onAuthStateChanged
 // projectId is always read from localStorage
