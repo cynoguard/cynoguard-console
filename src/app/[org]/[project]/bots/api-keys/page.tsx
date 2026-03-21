@@ -42,7 +42,7 @@ import {
   Trash2,
   Zap
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -58,6 +58,7 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const router = useRouter();
+  const { org, project } = useParams() as { org: string; project: string };
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
@@ -111,7 +112,7 @@ export default function ApiKeysPage() {
         }
         setIsDialogOpen(false);
         setNewKeyName("");
-        router.push(`/cynoguard/cynoguard-main/bots/${response.data.data.id}/setup`);
+        router.push(`/${org}/${project}/bots/${response.data.data.id}/setup`);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
@@ -242,7 +243,7 @@ export default function ApiKeysPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                        <DropdownMenuItem onClick={() => router.push(`/cynoguard/cynoguard-main/bots/${apiKey.id}/setup`)} className="gap-2 text-xs cursor-pointer">
+                        <DropdownMenuItem onClick={() => router.push(`/${org}/${project}/bots/${apiKey.id}/setup`)} className="gap-2 text-xs cursor-pointer">
                           <ExternalLink className="h-3.5 w-3.5" /> View Setup
                         </DropdownMenuItem>
                         <DropdownMenuItem 
