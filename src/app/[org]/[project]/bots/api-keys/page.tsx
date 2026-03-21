@@ -107,12 +107,27 @@ export default function ApiKeysPage() {
 
       if (response.data.status === "success") {
         toast.success(`Key "${newKeyName}" created`);
-        if (response.data.data.api_key) {
-          sessionStorage.setItem("onetime-api-key", response.data.data.api_key);
+
+        // Store the one-time API key before navigating
+        const apiKeyValue = response.data.data?.api_key;
+        const keyId       = response.data.data?.id;
+
+        if (apiKeyValue) {
+          sessionStorage.setItem("onetime-api-key", apiKeyValue);
         }
+
         setIsDialogOpen(false);
         setNewKeyName("");
-        router.push(`/${org}/${project}/bots/${response.data.data.id}/setup`);
+
+        if (!keyId) {
+          // id missing — refresh list instead of navigating to a broken URL
+          console.error("API key created but id is missing from response:", response.data);
+          toast.error("Key created but setup page unavailable — please use View Setup from the table.");
+          fetchApiKeys();
+          return;
+        }
+
+        router.push(`/${org}/${project}/bots/${keyId}/setup`);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
@@ -243,7 +258,10 @@ export default function ApiKeysPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                        <DropdownMenuItem onClick={() => router.push(`/${org}/${project}/bots/${apiKey.id}/setup`)} className="gap-2 text-xs cursor-pointer">
+                        <DropdownMenuItem onClick={() => {
+                            if (!apiKey.id) { toast.error("Key ID missing"); return; }
+                            router.push(`/${org}/${project}/bots/${apiKey.id}/setup`);
+                          }} className="gap-2 text-xs cursor-pointer">
                           <ExternalLink className="h-3.5 w-3.5" /> View Setup
                         </DropdownMenuItem>
                         <DropdownMenuItem 
