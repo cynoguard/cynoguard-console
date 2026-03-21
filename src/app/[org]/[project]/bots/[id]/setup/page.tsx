@@ -37,7 +37,7 @@ export default function BotSetupPage() {
 
     const getAPIKeySetupInfo = async () => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-key/${id}`);
+        const response = await axios.get(`https://api.cynoguard.com/api/bot-dtection/api-key/${id}`);
         if(response.data.status === "success"){
           console.log(response.data.data)
            setKeyData(response.data.data);
@@ -78,10 +78,10 @@ export default function BotSetupPage() {
   const verifyConnection = async () => {
     setIsVerifying(true)
     // Simulate DB check for incoming session
-    const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-key/${id}/connection/status`)
+    const response = await axios.get(`https://api.cynoguard.com/api/bot-dtection/api-key/${id}/connection/status`)
     console.log(response.data.data)
     if(response.data.status === "success" && response.data.data.connected){
-      await axios.put(`http://localhost:4000/api/bot-dtection/api-key/${id}`,{
+      await axios.put(`https://api.cynoguard.com/api/bot-dtection/api-key/${id}`,{
         status:"connected"
       });
       setIsVerifying(false)

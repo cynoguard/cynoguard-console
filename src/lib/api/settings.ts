@@ -1,4 +1,4 @@
-const BASE = "http://localhost:4000";
+const BASE = "https://api.cynoguard.com";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

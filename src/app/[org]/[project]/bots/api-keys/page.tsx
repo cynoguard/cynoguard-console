@@ -75,7 +75,7 @@ export default function ApiKeysPage() {
     if (!projectId) return;
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-keys/${projectId}/list`);
+      const response = await axios.get(`https://api.cynoguard.com/api/bot-dtection/api-keys/${projectId}/list`);
       if (response.data.status === "success") {
         setApiKeysList(response.data.data);
         console.log(apiKeysList)
@@ -99,7 +99,7 @@ export default function ApiKeysPage() {
 
     setIsCreating(true);
     try {
-      const response = await axios.post("http://localhost:4000/api/bot-dtection/api-key", {
+      const response = await axios.post("https://api.cynoguard.com/api/bot-dtection/api-key", {
         projectId,
         name: newKeyName,
       });
@@ -124,7 +124,7 @@ export default function ApiKeysPage() {
     if (!selectedKey) return;
     setIsRevoking(true);
     try {
-      const response = await axios.delete(`http://localhost:4000/api/bot-dtection/api-keys/${selectedKey.id}`);
+      const response = await axios.delete(`https://api.cynoguard.com/api/bot-dtection/api-keys/${selectedKey.id}`);
       if (response.data.status === "success") {
         toast.success("API Key revoked successfully");
         setIsRevokeOpen(false);
