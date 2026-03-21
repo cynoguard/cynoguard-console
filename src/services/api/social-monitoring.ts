@@ -112,7 +112,7 @@ export function mentionToAlert(m: BrandMention): SocialAlert {
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  // Attach Firebase auth token so the server auth preHandler can verify the user
+  // Get Firebase auth token for every request
   let authHeader: Record<string, string> = {};
   try {
     const user = auth.currentUser;
@@ -120,19 +120,22 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
       const token = await user.getIdToken();
       authHeader = { Authorization: `Bearer ${token}` };
     }
-  } catch {
-    // No user signed in — request will get 401 from server
-  }
+  } catch { /* no user signed in */ }
+
+  // Don't send Content-Type on DELETE requests with no body
+  const isDelete = init?.method === "DELETE";
+  const headers: Record<string, string> = {
+    ...(isDelete ? {} : { "Content-Type": "application/json" }),
+    ...authHeader,
+    ...(init?.headers as Record<string, string> ?? {}),
+  };
 
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeader,
-      ...init?.headers,
-    },
+    headers,
   });
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body?.error ?? `HTTP ${res.status}`);
