@@ -1,5 +1,7 @@
 'use client';
 
+import { useProjectId } from '@/hooks/use-project-id';
+
 import { KpiCards } from '@/components/dashboard/kpi-cards';
 import { MentionsChart } from '@/components/dashboard/mentions-chart';
 import { SentimentChart } from '@/components/dashboard/sentiment-chart';
@@ -35,8 +37,9 @@ export default function SocialOverviewPage() {
   const [loading,   setLoading]   = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { projectId } = useProjectId();
+
   const load = useCallback(async (isRefresh = false) => {
-    const projectId = localStorage.getItem('activeProjectId');
     if (!projectId) return;
 
     isRefresh ? setRefreshing(true) : setLoading(true);
