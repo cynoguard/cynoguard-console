@@ -1,21 +1,18 @@
 "use client"
 
-import { auth } from "@/lib/firebase"
-import axios from "axios"
-import { onAuthStateChanged, signOut } from "firebase/auth"
 import {
-  BookOpen,
-  Bot,
-  ChartArea,
-  Command,
-  Globe,
-  LayoutDashboard,
-  LifeBuoy,
-  Projector,
-  Search,
-  Send,
-  Settings2,
-  Users
+    BookOpen,
+    Bot,
+    ChartArea,
+    Command,
+    Globe,
+    LayoutDashboard,
+    LifeBuoy,
+    Projector,
+    Search,
+    Send,
+    Settings2,
+    Users
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
@@ -26,14 +23,14 @@ import { NavGeneralItem } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarSeparator,
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarSeparator,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 
@@ -41,14 +38,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
 
  // ── Read localStorage at init — no useEffect needed ────
-const [project,      setProject]      = useState<string | null>(() =>
+const [project]      = useState<string | null>(() =>
   typeof window !== "undefined" ? localStorage.getItem("activeProject") : null
 )
-const [organization, setOrganization] = useState<string | null>(() =>
+const [organization] = useState<string | null>(() =>
   typeof window !== "undefined" ? localStorage.getItem("organization") : null
 )
-const [orgName,      setOrgName]      = useState<string>("Organization")
-const [userEmail,    setUserEmail]    = useState<string>("")
 
 // ── Guard redirect ──────────────────────────────────────
 useEffect(() => {
@@ -58,41 +53,6 @@ useEffect(() => {
     router.push(`/${organization}/projects`)
   }
 }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Fetch org display name ──────────────────────────────
-  useEffect(() => {
-    if (!organization) return
-
-    const fetchOrgName = async () => {
-      try {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          unsubscribe() // one-shot
-          if (!user) return
-
-          setUserEmail(user.email ?? "")
-
-          const idToken = await user.getIdToken()
-          const res = await axios.get(
-            `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
-            { headers: { Authorization: `Bearer ${idToken}` } }
-          )
-          const orgData = res.data?.data?.org_member_info?.organization
-          if (orgData?.name) setOrgName(orgData.name)
-        })
-      } catch {
-        // silently fall back to slug
-        setOrgName(organization)
-      }
-    }
-
-    fetchOrgName()
-  }, [organization])
-
-  const handleLogout = async () => {
-    await signOut(auth)
-    localStorage.clear()
-    router.push("/sign-in")
-  }
 
   const basePath = `/${organization}/${project}`
 

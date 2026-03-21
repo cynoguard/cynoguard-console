@@ -5,42 +5,42 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
 } from "@/components/ui/table";
 import axios from "axios";
 import {
-  AlertTriangle,
-  Copy,
-  ExternalLink,
-  Key,
-  Loader2,
-  MoreHorizontal,
-  Plus,
-  ShieldAlert,
-  Trash2,
-  Zap
+    AlertTriangle,
+    Copy,
+    ExternalLink,
+    Key,
+    Loader2,
+    MoreHorizontal,
+    Plus,
+    ShieldAlert,
+    Trash2,
+    Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -78,7 +78,6 @@ export default function ApiKeysPage() {
       const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-keys/${projectId}/list`);
       if (response.data.status === "success") {
         setApiKeysList(response.data.data);
-        console.log(apiKeysList)
       } else {
         toast.error(response.data.message || "Failed to fetch API keys");
       }

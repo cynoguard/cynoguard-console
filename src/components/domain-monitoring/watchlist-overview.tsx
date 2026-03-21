@@ -37,12 +37,12 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToggleActive, useTriggerScan, useWatchlist } from "@/hooks/use-domain-monitoring";
-import type { WatchlistEntry } from "@/types/domain-monitoring";
+import type { WatchlistEntry } from "@/lib/api/domain-monitoring";
 import { AddDomainDialog } from "./add-domain-dialog";
 
 // ── Status Helpers ──────────────────────────────────────────────────
 
-function ScanStatusBadge({ status }: { status?: WatchlistEntry["lastScanStatus"] }) {
+function ScanStatusBadge({ status }: { status?: WatchlistEntry["lastScanStatus"] | null }) {
     switch (status) {
         case "running":
             return (

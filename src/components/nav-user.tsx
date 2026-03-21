@@ -2,9 +2,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuGroup,
-  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu, DropdownMenuContent, DropdownMenuGroup,
+    DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { RootState } from "@/store"
@@ -16,7 +16,7 @@ import { useSelector } from "react-redux"
 export function NavUser() {
   const { isMobile } = useSidebar()
   const authState    = useSelector((state: RootState) => state.auth)
-  const [organization, setOrganization] = useState<string | null>(() =>
+  const [organization] = useState<string | null>(() =>
     typeof window !== "undefined" ? localStorage.getItem("organization") : null
   )
 

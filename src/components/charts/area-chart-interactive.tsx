@@ -2,11 +2,11 @@
 "use client"
 
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
+    Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card"
 import {
-  ChartContainer, ChartLegend, ChartLegendContent,
-  ChartTooltip, ChartTooltipContent, type ChartConfig,
+    ChartContainer, ChartLegend, ChartLegendContent,
+    ChartTooltip, ChartTooltipContent, type ChartConfig,
 } from "@/components/ui/chart"
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
@@ -110,7 +110,7 @@ export function ChartAreaInteractive({
                 />
               }
             />
-            {dataKeys.map((key, i) => (
+            {dataKeys.map((key) => (
               <Area
                 key={key}
                 dataKey={key}

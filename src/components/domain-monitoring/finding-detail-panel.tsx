@@ -2,27 +2,25 @@
 
 import { format } from "date-fns";
 import {
-    ExternalLink,
     Download,
-    Globe,
-    ShieldCheck,
-    Server,
+    ExternalLink,
     FileText,
     Lock,
-    X,
+    Server,
+    ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { Finding } from "@/types/domain-monitoring";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+import type { Finding } from "@/types/domain-monitoring";
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

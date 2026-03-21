@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
+    AlertTriangle,
     Bell,
     ChevronLeft,
     ChevronRight,
-    AlertTriangle,
 } from "lucide-react";
+import { useState } from "react";
 
-import { useAlerts } from "@/hooks/use-domain-monitoring";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,6 +27,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAlerts } from "@/hooks/use-domain-monitoring";
 
 // ── Skeleton ────────────────────────────────────────────────────────
 
@@ -96,6 +96,14 @@ export function AlertsTab({ watchlistId }: AlertsTabProps) {
                                 </TableHeader>
                                 <TableBody>
                                     {alerts.map((alert) => (
+                                        (() => {
+                                            const payload = alert.payload as {
+                                                similarityScore?: number;
+                                                isLive?: boolean;
+                                                hasMX?: boolean;
+                                                sslStatus?: string;
+                                            };
+                                            return (
                                         <TableRow key={alert.id}>
                                             <TableCell className="text-sm">
                                                 <TooltipProvider>
@@ -122,13 +130,12 @@ export function AlertsTab({ watchlistId }: AlertsTabProps) {
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">
                                                 <div className="flex flex-wrap gap-1">
-                                                    {/* TODO: type safety - temporary any for build stability */}
-                                                    {(alert.payload as any).similarityScore != null && (
+                                                    {payload.similarityScore != null && (
                                                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                                            {Math.round(Number((alert.payload as any).similarityScore) * 100)}% match
+                                                            {Math.round(Number(payload.similarityScore) * 100)}% match
                                                         </Badge>
                                                     )}
-                                                    {(alert.payload as any).isLive && (
+                                                    {payload.isLive && (
                                                         <Badge
                                                             variant="secondary"
                                                             className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
@@ -136,7 +143,7 @@ export function AlertsTab({ watchlistId }: AlertsTabProps) {
                                                             Live
                                                         </Badge>
                                                     )}
-                                                    {(alert.payload as any).hasMX && (
+                                                    {payload.hasMX && (
                                                         <Badge
                                                             variant="secondary"
                                                             className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-400 border-red-500/20"
@@ -144,14 +151,16 @@ export function AlertsTab({ watchlistId }: AlertsTabProps) {
                                                             MX
                                                         </Badge>
                                                     )}
-                                                    {(alert.payload as any).sslStatus && (
+                                                    {payload.sslStatus && (
                                                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                                            SSL: {String(alert.payload.sslStatus)}
+                                                            SSL: {String(payload.sslStatus)}
                                                         </Badge>
                                                     )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
+                                            );
+                                        })()
                                     ))}
                                 </TableBody>
                             </Table>
