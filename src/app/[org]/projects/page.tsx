@@ -111,7 +111,7 @@ export default function ProjectsPage() {
       const orgId = localStorage.getItem("organizationId");
 
       const response = await axios.post(
-        `http://localhost:4000/api/organization/${orgId}/projects`,
+        `https://api.cynoguard.com/api/organization/${orgId}/projects`,
         {
           name:        projectName.trim().toLowerCase(),
           primaryDomain: domain.trim(),

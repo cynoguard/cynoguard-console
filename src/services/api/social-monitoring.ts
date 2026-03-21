@@ -112,7 +112,7 @@ export function mentionToAlert(m: BrandMention): SocialAlert {
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  // Get Firebase auth token for every request
+  // Attach Firebase auth token so server can verify the user
   let authHeader: Record<string, string> = {};
   try {
     const user = auth.currentUser;
@@ -122,7 +122,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     }
   } catch { /* no user signed in */ }
 
-  // Don't send Content-Type on DELETE requests with no body
+  // Don't send Content-Type on DELETE (no body)
   const isDelete = init?.method === "DELETE";
   const headers: Record<string, string> = {
     ...(isDelete ? {} : { "Content-Type": "application/json" }),

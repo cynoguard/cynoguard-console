@@ -47,6 +47,35 @@ export default function AppInitializer({ children }: { children: React.ReactNode
     }
   }, [authState]);
 
+  // Step 3a: Update activeProjectId when URL project changes (already authenticated)
+  useEffect(() => {
+    if (!authState.userId || !projectName) return;
+    const orgData = localStorage.getItem("organization");
+    if (!orgData) return;
+
+    // Re-read projects from the API to find the matching projectId
+    auth.currentUser?.getIdToken().then((idToken) => {
+      const organization = localStorage.getItem("organization");
+      if (!organization) return;
+      fetch(
+        `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
+        { headers: { Authorization: `Bearer ${idToken}` } }
+      )
+        .then((r) => r.json())
+        .then((res) => {
+          const projects: { id: string; name: string }[] =
+            res?.data?.org_member_info?.organization?.projects ?? [];
+          const match = projects.find((p) => p.name === projectName) ?? projects[0];
+          if (match) {
+            localStorage.setItem("activeProject",   match.name);
+            localStorage.setItem("activeProjectId", match.id);
+          }
+        })
+        .catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName, authState.userId]);
+
   // Step 3: Sync with Firebase + backend if Redux is empty
   useEffect(() => {
     if (authState.userId) {
