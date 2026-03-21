@@ -1,4 +1,5 @@
 import { getActiveProjectId } from "@/lib/api/bot-management";
+import { auth } from "@/lib/firebase";
 
 // src/services/api/social-monitoring.ts
 const BASE = "https://api.cynoguard.com";
@@ -111,10 +112,26 @@ export function mentionToAlert(m: BrandMention): SocialAlert {
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  // Attach Firebase auth token so the server auth preHandler can verify the user
+  let authHeader: Record<string, string> = {};
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      authHeader = { Authorization: `Bearer ${token}` };
+    }
+  } catch {
+    // No user signed in — request will get 401 from server
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader,
+      ...init?.headers,
+    },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
