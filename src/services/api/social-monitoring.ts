@@ -54,51 +54,30 @@ export async function resolveProjectId(
   orgName: string,
   projectName: string
 ): Promise<string | null> {
-  try {
-    const headers: Record<string, string> = {};
-    const user = auth.currentUser;
-    if (user) {
-      const token = await user.getIdToken();
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  // app-initializer already keeps activeProjectId in sync with the URL.
+  // We just need to wait briefly for it to finish when navigating between projects.
 
-    // Try the dedicated endpoint first
-    const res = await fetch(
-      `${API}/api/project-id?orgName=${encodeURIComponent(orgName)}&projectName=${encodeURIComponent(projectName)}`,
-      { headers }
-    );
+  // 1. If localStorage already has the right project, return immediately
+  const cached        = localStorage.getItem("activeProjectId");
+  const cachedProject = localStorage.getItem("activeProject");
 
-    if (res.ok) {
-      const data = await res.json();
-      return data?.data?.projectId ?? null;
-    }
-
-    // Fallback: get org projects and match by name
-    const orgId = localStorage.getItem("organizationId");
-    if (!orgId) return localStorage.getItem("activeProjectId");
-
-    const r2 = await fetch(`${API}/api/organization/${orgId}/projects`, { headers });
-    if (!r2.ok) return localStorage.getItem("activeProjectId");
-
-    const d2 = await r2.json();
-    const projects: { id: string; name: string }[] =
-      d2?.data?.projects?.projects ?? d2?.data?.projects ?? [];
-
-    const match = projects.find(
-      (p) => p.name === projectName || p.name === projectName.toLowerCase()
-    );
-
-    if (match) {
-      localStorage.setItem("activeProject",   match.name);
-      localStorage.setItem("activeProjectId", match.id);
-      return match.id;
-    }
-
-    return localStorage.getItem("activeProjectId");
-  } catch {
-    return localStorage.getItem("activeProjectId");
+  if (cached && cachedProject === projectName) {
+    return cached;
   }
+
+  // 2. Wait up to 3 seconds for app-initializer to update activeProjectId
+  //    It polls every 150ms — fast enough to not feel slow
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 150));
+    const id   = localStorage.getItem("activeProjectId");
+    const name = localStorage.getItem("activeProject");
+    if (id && name === projectName) return id;
+  }
+
+  // 3. Fallback — return whatever is in localStorage
+  return localStorage.getItem("activeProjectId");
 }
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
