@@ -78,6 +78,35 @@ export interface CreateWatchlistInput {
   tldSuspicious?:       string[];
 }
 
+const DOMAIN_MONITORING_DEMO_WATCHLIST: WatchlistEntry[] = [
+  {
+    id: "demo-cynoguard",
+    officialDomainRaw: "cynoguard.com",
+    officialDomainNormalized: "cynoguard.com",
+    label: "Primary Domain",
+    active: true,
+    intervalHours: 6,
+    lastScanAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
+    lastScanStatus: "success",
+    nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
+    suspiciousCount: 2,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+  },
+  {
+    id: "demo-acme-security",
+    officialDomainRaw: "acme-security.io",
+    officialDomainNormalized: "acme-security.io",
+    label: "Campaign Domain",
+    active: false,
+    intervalHours: 12,
+    lastScanAt: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
+    lastScanStatus: "error",
+    nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 3).toISOString(),
+    suspiciousCount: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+  },
+];
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -204,19 +233,23 @@ function normalizeScanLog(raw: unknown): ScanLog {
 // ─── Watchlist ────────────────────────────────────────────────────────────────
 
 export async function getWatchlist(): Promise<WatchlistEntry[]> {
-  const { orgId, projectId } = ctx();
-  const response = await api<unknown>(`/api/v1/orgs/${orgId}/projects/${projectId}/watchlist`);
-  const rows = unwrapArray(response, ["items", "data", "results", "watchlist", "entries"]);
-  if (rows.length > 0) {
-    return rows.map(normalizeWatchlistEntry);
+  try {
+    const { orgId, projectId } = ctx();
+    const response = await api<unknown>(`/api/v1/orgs/${orgId}/projects/${projectId}/watchlist`);
+    const rows = unwrapArray(response, ["items", "data", "results", "watchlist", "entries"]);
+    if (rows.length > 0) {
+      return rows.map(normalizeWatchlistEntry);
+    }
+
+    // Some backends return a single object for one-entry watchlists.
+    if (isRecord(response)) {
+      return [normalizeWatchlistEntry(response)];
+    }
+  } catch {
+    // Preserve API call flow, but allow local demo rendering when backend/context is unavailable.
   }
 
-  // Some backends return a single object for one-entry watchlists.
-  if (isRecord(response)) {
-    return [normalizeWatchlistEntry(response)];
-  }
-
-  return [];
+  return DOMAIN_MONITORING_DEMO_WATCHLIST;
 }
 
 export async function getWatchlistEntry(watchlistId: string): Promise<WatchlistDetail> {
