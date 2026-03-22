@@ -20,7 +20,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
   const apiCallStateRef = useRef<"idle" | "pending" | "done">("idle");
 
   // Resolve org + project from URL params
-  const organization  = (params?.organization as string) || pathname.split("/")[1];
+  const organization  = (params?.org as string) || pathname.split("/")[1];
   const projectName   = (params?.project as string)      || pathname.split("/")[2];
 
   // Step 1: Restore Redux from localStorage on mount
@@ -47,18 +47,17 @@ export default function AppInitializer({ children }: { children: React.ReactNode
     }
   }, [authState]);
 
-  // Step 3a: Update activeProjectId when URL project changes (already authenticated)
+  // Step 3a: Update activeProjectId whenever URL project/org changes
+  // Runs for every navigation — keeps activeProjectId always in sync
   useEffect(() => {
-    if (!authState.userId || !projectName) return;
-    const orgData = localStorage.getItem("organization");
-    if (!orgData) return;
+    if (!projectName) return;
+    const orgToUse = organization || localStorage.getItem("organization");
+    if (!orgToUse) return;
 
     // Re-read projects from the API to find the matching projectId
     auth.currentUser?.getIdToken().then((idToken) => {
-      const organization = localStorage.getItem("organization");
-      if (!organization) return;
       fetch(
-        `https://api.cynoguard.com/api/auth/user?orgName=${organization}`,
+        `https://api.cynoguard.com/api/auth/user?orgName=${orgToUse}`,
         { headers: { Authorization: `Bearer ${idToken}` } }
       )
         .then((r) => r.json())
@@ -74,7 +73,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         .catch(() => {});
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName, authState.userId]);
+  }, [projectName, authState.userId, organization]);
 
   // Step 3: Sync with Firebase + backend if Redux is empty
   useEffect(() => {
