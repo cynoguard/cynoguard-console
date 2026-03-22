@@ -3,7 +3,6 @@
 import {
   getMentions,
   resolveMention,
-  resolveProjectId,
   type BrandMention,
   type MentionFilters,
   type MentionStatus,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/table";
 import { ExternalLink, Inbox, RefreshCw } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,10 +44,6 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function FeedPage() {
-  const params  = useParams();
-  const org     = params?.org     as string;
-  const project = params?.project as string;
-
   const [projectId,       setProjectId]       = useState<string | null>(null);
   const [mentions,        setMentions]        = useState<BrandMention[]>([]);
   const [total,           setTotal]           = useState(0);
@@ -60,11 +54,11 @@ export default function FeedPage() {
   const [sentimentFilter, setSentimentFilter] = useState("ALL");
   const [statusFilter,    setStatusFilter]    = useState("ALL");
 
-  // Resolve projectId from URL
+  // Read projectId from localStorage (set by app-initializer)
   useEffect(() => {
-    if (!org || !project) return;
-    resolveProjectId(org, project).then(setProjectId);
-  }, [org, project]);
+    const id = localStorage.getItem("activeProjectId");
+    setProjectId(id);
+  }, []);
 
   // Load mentions
   const load = useCallback(async (isRefresh = false) => {
