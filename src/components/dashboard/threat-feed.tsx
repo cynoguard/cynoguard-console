@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
-  getMentions, patchMention,
+  getMentions, resolveMention,
   type BrandMention, type MentionStatus, type RiskLevel, type Sentiment,
 } from '@/services/api/social-monitoring';
 import { RefreshCw } from 'lucide-react';
@@ -64,7 +64,7 @@ export default function FeedPage() {
   async function handleResolve(mentionId: string) {
     try {
       const pid = projectId || localStorage.getItem('activeProjectId') || '';
-    await patchMention(pid, mentionId, 'DISMISSED');
+    await resolveMention(pid, mentionId);
       setMentions((prev) =>
         prev.map((m) => m.id === mentionId ? { ...m, status: 'DISMISSED' } : m)
       );
