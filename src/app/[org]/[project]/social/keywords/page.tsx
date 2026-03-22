@@ -1,4 +1,3 @@
-import { useParams } from "next/navigation";
 "use client";
 
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Hash, Inbox, Loader2, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
 export default function KeywordsPage() {

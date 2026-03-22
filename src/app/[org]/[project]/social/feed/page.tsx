@@ -1,62 +1,90 @@
-import { useParams } from "next/navigation";
 "use client";
 
+import { useParams } from "next/navigation";
 import {
-  getMentions,
-  resolveMention,
-  type BrandMention,
-  type MentionFilters,
-  type MentionStatus,
-  type RiskLevel,
-  type Sentiment,
+  getMentionStats,
+  triggerScan,
+  type MentionStats,
 } from "@/services/api/social-monitoring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { ExternalLink, Inbox, RefreshCw } from "lucide-react";
-import { FaXTwitter } from "react-icons/fa6";
+  AlertTriangle,
+  MessageSquare,
+  RefreshCw,
+  Radio,
+  Scan,
+  ShieldAlert,
+  ThumbsDown,
+  ThumbsUp,
+  Minus,
+  TrendingUp,
+  CalendarClock,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-const sentimentStyles: Record<string, string> = {
-  POSITIVE: "bg-green-500/10 text-green-400 border-green-500/30",
-  NEUTRAL:  "bg-zinc-800/50 text-zinc-400 border-zinc-700",
-  NEGATIVE: "bg-red-500/10 text-red-400 border-red-500/30",
-};
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
 
-const riskStyles: Record<string, string> = {
-  LOW:    "bg-green-500/10 text-green-400 border-green-500/30",
-  MEDIUM: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
-  HIGH:   "bg-red-500/10 text-red-400 border-red-500/30",
-};
+function KpiCard({
+  icon,
+  label,
+  value,
+  sub,
+  accent = "default",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  sub?: string;
+  accent?: "default" | "blue" | "green" | "red" | "yellow" | "purple";
+}) {
+  const colors = {
+    default: "bg-zinc-800/60 text-zinc-400",
+    blue:    "bg-blue-500/10 text-blue-400",
+    green:   "bg-green-500/10 text-green-400",
+    red:     "bg-red-500/10 text-red-400",
+    yellow:  "bg-yellow-500/10 text-yellow-400",
+    purple:  "bg-purple-500/10 text-purple-400",
+  };
 
-const statusStyles: Record<string, string> = {
-  NEW:       "bg-blue-500/10 text-blue-400 border-blue-500/30",
-  VIEWED:    "bg-zinc-800/50 text-zinc-400 border-zinc-700",
-  DISMISSED: "bg-zinc-800/30 text-zinc-600 border-zinc-800",
-  ARCHIVED:  "bg-zinc-800/30 text-zinc-600 border-zinc-800",
-};
+  return (
+    <Card className="p-5 bg-zinc-900/50 border-zinc-800 space-y-3">
+      <div className={`w-fit p-2 rounded-lg ${colors[accent]}`}>{icon}</div>
+      <div>
+        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+        {sub && <p className="text-xs text-zinc-600 mt-0.5">{sub}</p>}
+      </div>
+    </Card>
+  );
+}
 
-export default function FeedPage() {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function SocialOverviewPage() {
   const params  = useParams();
   const project = params?.project as string;
 
-  const [projectId,       setProjectId]       = useState<string | null>(null);
-  const [mentions,        setMentions]        = useState<BrandMention[]>([]);
-  const [total,           setTotal]           = useState(0);
-  const [loading,         setLoading]         = useState(true);
-  const [refreshing,      setRefreshing]      = useState(false);
-  const [resolvingId,     setResolvingId]     = useState<string | null>(null);
-  const [riskFilter,      setRiskFilter]      = useState("ALL");
-  const [sentimentFilter, setSentimentFilter] = useState("ALL");
-  const [statusFilter,    setStatusFilter]    = useState("ALL");
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [stats,     setStats]     = useState<MentionStats | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [scanning,  setScanning]  = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
 
   // Resolve projectId by calling the server directly with orgId + project name
   // organizationId is always in localStorage from login — never changes per session
@@ -113,59 +141,67 @@ export default function FeedPage() {
     return () => { cancelled = true; };
   }, [project]);
 
-  // Load mentions
+  // Load stats once projectId is known
   const load = useCallback(async (isRefresh = false) => {
     if (!projectId) return;
     isRefresh ? setRefreshing(true) : setLoading(true);
-
-    const filters: MentionFilters = {
-      limit:     50,
-      riskLevel: riskFilter      !== "ALL" ? riskFilter      as RiskLevel     : undefined,
-      sentiment: sentimentFilter !== "ALL" ? sentimentFilter as Sentiment     : undefined,
-      status:    statusFilter    !== "ALL" ? statusFilter    as MentionStatus : undefined,
-    };
-
+    setError(null);
     try {
-      const res = await getMentions(projectId, filters);
-      setMentions(res.data);
-      setTotal(res.pagination.total);
+      const data = await getMentionStats(projectId);
+      setStats(data);
     } catch (e) {
-      toast.error("Failed to load mentions");
+      setError(e instanceof Error ? e.message : "Failed to load stats");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [projectId, riskFilter, sentimentFilter, statusFilter]);
+  }, [projectId]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Resolve (dismiss) a mention
-  async function handleResolve(mentionId: string) {
+  // Manual scan
+  const handleScan = async () => {
     if (!projectId) return;
-    setResolvingId(mentionId);
+    setScanning(true);
     try {
-      await resolveMention(projectId, mentionId);
-      setMentions((prev) =>
-        prev.map((m) => m.id === mentionId ? { ...m, status: "DISMISSED" } : m)
-      );
-      toast.success("Mention resolved");
-    } catch {
-      toast.error("Failed to resolve mention");
+      await triggerScan(projectId);
+      await load(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Scan failed");
     } finally {
-      setResolvingId(null);
+      setScanning(false);
     }
-  }
+  };
 
-  // Open tweet in new tab (the "View on X" action)
-  function openTweet(mention: BrandMention) {
-    const url = mention.tweetUrl
-      ?? `https://x.com/${mention.authorUsername}/status/${mention.externalId}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
+  // Derived numbers
+  const totalMentions  = stats?.byStatus.reduce((s, r) => s + r._count, 0) ?? 0;
+  const highRiskCount  = stats?.byRisk.find((r) => r.riskLevel === "HIGH")?._count ?? 0;
+  const newCount       = stats?.byStatus.find((r) => r.status === "NEW")?._count ?? 0;
+  const positiveCount  = stats?.bySentiment.find((r) => r.sentiment === "POSITIVE")?._count ?? 0;
+  const negativeCount  = stats?.bySentiment.find((r) => r.sentiment === "NEGATIVE")?._count ?? 0;
+  const neutralCount   = stats?.bySentiment.find((r) => r.sentiment === "NEUTRAL")?._count ?? 0;
+  const lastScan       = stats?.recentScans?.[0];
 
-  // Quick risk counters
-  const byRisk = (level: string) =>
-    mentions.filter((m) => m.riskLevel === level).length;
+  const positivePct = totalMentions ? ((positiveCount / totalMentions) * 100).toFixed(1) : "0";
+  const negativePct = totalMentions ? ((negativeCount / totalMentions) * 100).toFixed(1) : "0";
+
+  // Chart data
+  const chartData = stats?.mentionsOverTime.map((d) => ({
+    date:  new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    count: d.count,
+  })) ?? [];
+
+  const pieData = [
+    { name: "Positive", value: positiveCount, fill: "#22c55e" },
+    { name: "Neutral",  value: neutralCount,  fill: "#71717a" },
+    { name: "Negative", value: negativeCount, fill: "#ef4444" },
+  ].filter((d) => d.value > 0);
+
+  const riskStyles: Record<string, string> = {
+    LOW:    "border-green-500/30 bg-green-500/5 text-green-400",
+    MEDIUM: "border-yellow-500/30 bg-yellow-500/5 text-yellow-400",
+    HIGH:   "border-red-500/30 bg-red-500/5 text-red-400",
+  };
 
   if (!projectId && !loading) {
     return (
@@ -176,180 +212,203 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Threat Feed</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Social Media Monitoring</h1>
           <p className="text-zinc-500 mt-1 text-sm">
-            All brand mentions detected across X. Total: {total.toLocaleString()}
+            Real-time brand mentions, risk scoring, and sentiment analysis.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => load(true)}
-          disabled={refreshing || loading}
-          className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {lastScan && (
+            <div className="flex items-center gap-2 text-xs text-zinc-500 border border-zinc-800 rounded-lg px-3 py-2">
+              <Radio className="h-3.5 w-3.5 text-green-500 animate-pulse" />
+              Last scan: {new Date(lastScan.scannedAt).toLocaleTimeString("en-US", {
+                hour: "2-digit", minute: "2-digit",
+              })}
+              &nbsp;·&nbsp;{lastScan.mentionsFound} found
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => load(true)}
+            disabled={refreshing || loading}
+            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleScan}
+            disabled={scanning || loading || !projectId}
+            className="bg-green-600 hover:bg-green-500 text-white"
+          >
+            <Scan className={`h-4 w-4 mr-2 ${scanning ? "animate-spin" : ""}`} />
+            {scanning ? "Scanning..." : "Scan Now"}
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <Select value={riskFilter} onValueChange={setRiskFilter}>
-          <SelectTrigger className="w-36 bg-zinc-900 border-zinc-700 text-zinc-300">
-            <SelectValue placeholder="Risk" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-700">
-            <SelectItem value="ALL">All Risk</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="LOW">Low</SelectItem>
-          </SelectContent>
-        </Select>
+      {error && (
+        <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400 font-mono">
+          {error}
+        </div>
+      )}
 
-        <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
-          <SelectTrigger className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
-            <SelectValue placeholder="Sentiment" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-700">
-            <SelectItem value="ALL">All Sentiment</SelectItem>
-            <SelectItem value="POSITIVE">Positive</SelectItem>
-            <SelectItem value="NEUTRAL">Neutral</SelectItem>
-            <SelectItem value="NEGATIVE">Negative</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-700">
-            <SelectItem value="ALL">All Status</SelectItem>
-            <SelectItem value="NEW">New</SelectItem>
-            <SelectItem value="VIEWED">Viewed</SelectItem>
-            <SelectItem value="DISMISSED">Dismissed</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Mentions table */}
-      <Card className="bg-zinc-900/50 border-zinc-800 overflow-hidden">
-        {loading ? (
-          <div className="space-y-2 p-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full bg-zinc-800/50" />
-            ))}
-          </div>
-        ) : mentions.length === 0 ? (
-          <div className="p-12 text-center text-zinc-600">
-            <Inbox className="mx-auto h-6 w-6 mb-2 opacity-50" />
-            <p className="text-sm">No mentions found — try different filters or run a scan.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-zinc-800 hover:bg-transparent">
-                  <TableHead className="text-zinc-500 text-xs uppercase">Platform</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Author</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Content</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Risk</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Sentiment</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Keyword</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Status</TableHead>
-                  <TableHead className="text-zinc-500 text-xs uppercase">Date</TableHead>
-                  <TableHead className="text-right text-zinc-500 text-xs uppercase">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mentions.map((m) => (
-                  <TableRow key={m.id} className="border-zinc-800 hover:bg-zinc-800/20">
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <FaXTwitter className="h-3.5 w-3.5 text-zinc-400" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-400">@{m.authorUsername}</TableCell>
-                    <TableCell className="max-w-xs">
-                      <p className="text-xs text-zinc-400 truncate max-w-[260px]">{m.content}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${riskStyles[m.riskLevel]}`}>
-                        {m.riskLevel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${sentimentStyles[m.sentiment]}`}>
-                        {m.sentiment.toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-zinc-500">{m.matchedKeyword ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${statusStyles[m.status]}`}>
-                        {m.status.toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-zinc-500">
-                      {new Date(m.publishedAt ?? m.scannedAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* View on X — opens the original tweet */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openTweet(m)}
-                          className="h-7 px-2 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200"
-                          title="View on X"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-
-                        {/* Resolve button — only for unresolved mentions */}
-                        {m.status !== "DISMISSED" && m.status !== "ARCHIVED" ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={resolvingId === m.id}
-                            onClick={() => handleResolve(m.id)}
-                            className="h-7 text-xs border-zinc-700 hover:bg-zinc-800"
-                          >
-                            {resolvingId === m.id ? "..." : "Resolve"}
-                          </Button>
-                        ) : (
-                          <span className="text-[10px] text-zinc-600 capitalize px-2">
-                            {m.status.toLowerCase()}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
-
-      {/* Insight cards */}
-      {!loading && mentions.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: "Total Shown",  value: mentions.length, color: "" },
-            { label: "High Risk",    value: byRisk("HIGH"),   color: "text-red-400" },
-            { label: "Medium Risk",  value: byRisk("MEDIUM"), color: "text-yellow-400" },
-            { label: "Low Risk",     value: byRisk("LOW"),    color: "text-green-400" },
-          ].map((item) => (
-            <Card key={item.label} className="p-4 bg-zinc-900/50 border-zinc-800">
-              <p className="text-xs text-zinc-500">{item.label}</p>
-              <p className={`text-2xl font-bold mt-1 ${item.color}`}>{item.value}</p>
-            </Card>
+      {/* KPI Grid */}
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl bg-zinc-800/50" />
           ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <KpiCard icon={<MessageSquare className="h-4 w-4" />} label="Total Mentions"   value={totalMentions.toLocaleString()}  sub="all time"                           accent="blue"    />
+          <KpiCard icon={<CalendarClock  className="h-4 w-4" />} label="Mentions Today"  value={stats?.mentionsToday ?? 0}        sub="last 24 hours"                      accent="purple"  />
+          <KpiCard icon={<ThumbsUp       className="h-4 w-4" />} label="Positive"        value={positiveCount.toLocaleString()}   sub={`${positivePct}% of total`}         accent="green"   />
+          <KpiCard icon={<ThumbsDown     className="h-4 w-4" />} label="Negative"        value={negativeCount.toLocaleString()}   sub={`${negativePct}% of total`}         accent="red"     />
+          <KpiCard icon={<AlertTriangle  className="h-4 w-4" />} label="Unreviewed"      value={newCount.toLocaleString()}        sub="new mentions"                       accent="yellow"  />
+        </div>
+      )}
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Mentions over time */}
+        <Card className="lg:col-span-2 p-6 bg-zinc-900/50 border-zinc-800">
+          <h2 className="text-sm font-semibold mb-1">Mentions Over Time</h2>
+          <p className="text-xs text-zinc-500 mb-5">30-day rolling window</p>
+          {loading ? (
+            <Skeleton className="h-56 w-full rounded-lg bg-zinc-800/50" />
+          ) : chartData.some((d) => d.count > 0) ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="mentionGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}   />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                <XAxis dataKey="date" stroke="#71717a" fontSize={11} interval={4} />
+                <YAxis stroke="#71717a" fontSize={11} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#09090b", border: "1px solid #27272a", borderRadius: 8, fontSize: 12 }}
+                  formatter={(v: number) => [v, "Mentions"]}
+                />
+                <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="url(#mentionGrad)" strokeWidth={2} name="Mentions" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-56 flex items-center justify-center text-sm text-zinc-600">
+              No mention data yet — add keywords and run a scan.
+            </div>
+          )}
+        </Card>
+
+        {/* Sentiment donut */}
+        <Card className="p-6 bg-zinc-900/50 border-zinc-800">
+          <h2 className="text-sm font-semibold mb-1">Sentiment Distribution</h2>
+          <p className="text-xs text-zinc-500 mb-4">All-time breakdown</p>
+          {loading ? (
+            <Skeleton className="h-48 w-full rounded-full bg-zinc-800/50" />
+          ) : pieData.length > 0 ? (
+            <div className="relative flex items-center justify-center h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#09090b", border: "1px solid #27272a", borderRadius: 8, fontSize: 12 }}
+                    formatter={(v: number) => [v, "mentions"]}
+                  />
+                  <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80} stroke="#09090b" strokeWidth={2}>
+                    {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-2xl font-bold">{totalMentions}</span>
+                <span className="text-xs text-zinc-500">total</span>
+              </div>
+            </div>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-sm text-zinc-600">No data</div>
+          )}
+          {pieData.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {pieData.map((d) => (
+                <div key={d.name} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.fill }} />
+                    <span className="text-zinc-400">{d.name}</span>
+                  </div>
+                  <span className="text-zinc-300 font-medium">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Risk breakdown */}
+      {!loading && stats?.byRisk && stats.byRisk.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {stats.byRisk.map((r) => (
+            <div key={r.riskLevel} className={`rounded-xl border p-5 flex items-center justify-between ${riskStyles[r.riskLevel] ?? "border-zinc-800"}`}>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider opacity-70">{r.riskLevel} Risk</p>
+                <p className="text-3xl font-bold mt-1">{r._count.toLocaleString()}</p>
+              </div>
+              <ShieldAlert className="h-8 w-8 opacity-20" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent scans */}
+      {!loading && stats?.recentScans && stats.recentScans.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Recent Scans</h2>
+          <div className="rounded-xl border border-zinc-800 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="border-b border-zinc-800 bg-zinc-900/80">
+                <tr>
+                  {["Status", "Mentions Found", "High Risk", "Scanned At"].map((h) => (
+                    <th key={h} className="px-5 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/60">
+                {stats.recentScans.map((scan) => (
+                  <tr key={scan.id} className="hover:bg-zinc-800/20">
+                    <td className="px-5 py-3">
+                      <Badge
+                        variant="outline"
+                        className={scan.scanStatus === "SUCCESS"
+                          ? "border-green-500/30 text-green-400 bg-green-500/5"
+                          : "border-red-500/30 text-red-400 bg-red-500/5"}
+                      >
+                        {scan.scanStatus}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3 text-sm font-semibold">{scan.mentionsFound}</td>
+                    <td className="px-5 py-3 text-sm text-orange-400">{scan.highRiskCount}</td>
+                    <td className="px-5 py-3 text-xs text-zinc-500">
+                      {new Date(scan.scannedAt).toLocaleString("en-US", {
+                        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

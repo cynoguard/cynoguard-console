@@ -1,4 +1,3 @@
-import { useParams } from "next/navigation";
 "use client";
 
 import {
@@ -24,6 +23,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   Area,
   AreaChart,
