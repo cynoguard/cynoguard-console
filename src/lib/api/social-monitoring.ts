@@ -23,8 +23,10 @@ async function getToken(): Promise<string | null> {
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getToken();
+  // Only send Content-Type if there is actually a body
+  const hasBody = !!init?.body;
   const headers: Record<string, string> = {
-    ...(init?.method !== "DELETE" ? { "Content-Type": "application/json" } : {}),
+    ...(hasBody ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
   const res = await fetch(`${BASE}${path}`, {
