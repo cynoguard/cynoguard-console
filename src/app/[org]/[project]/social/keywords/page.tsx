@@ -4,7 +4,6 @@ import {
   addKeyword,
   deleteKeyword,
   getKeywords,
-  resolveProjectId,
   toggleKeyword,
   type Keyword,
 } from "@/services/api/social-monitoring";
@@ -17,15 +16,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Hash, Inbox, Loader2, Plus, Trash2 } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function KeywordsPage() {
-  const params  = useParams();
-  const org     = params?.org     as string;
-  const project = params?.project as string;
-
   const [projectId,  setProjectId]  = useState<string | null>(null);
   const [keywords,   setKeywords]   = useState<Keyword[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -34,11 +28,11 @@ export default function KeywordsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error,      setError]      = useState("");
 
-  // Resolve projectId from URL
+  // Read projectId from localStorage (set by app-initializer)
   useEffect(() => {
-    if (!org || !project) return;
-    resolveProjectId(org, project).then(setProjectId);
-  }, [org, project]);
+    const id = localStorage.getItem("activeProjectId");
+    setProjectId(id);
+  }, []);
 
   // Load keywords once projectId is known
   const load = useCallback(async () => {
