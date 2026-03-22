@@ -48,32 +48,43 @@ export default function AppInitializer({ children }: { children: React.ReactNode
   }, [authState]);
 
   // Step 3a: Update activeProjectId whenever URL project/org changes
-  // Runs for every navigation — keeps activeProjectId always in sync
+  // Uses onAuthStateChanged so it works even when auth.currentUser is null on refresh
   useEffect(() => {
     if (!projectName) return;
     const orgToUse = organization || localStorage.getItem("organization");
     if (!orgToUse) return;
 
-    // Re-read projects from the API to find the matching projectId
-    auth.currentUser?.getIdToken().then((idToken) => {
-      fetch(
-        `https://api.cynoguard.com/api/auth/user?orgName=${orgToUse}`,
-        { headers: { Authorization: `Bearer ${idToken}` } }
-      )
-        .then((r) => r.json())
-        .then((res) => {
-          const projects: { id: string; name: string }[] =
-            res?.data?.org_member_info?.organization?.projects ?? [];
-          const match = projects.find((p) => p.name === projectName) ?? projects[0];
-          if (match) {
-            localStorage.setItem("activeProject",   match.name);
-            localStorage.setItem("activeProjectId", match.id);
-          }
-        })
-        .catch(() => {});
+    let cancelled = false;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user || cancelled) return;
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch(
+          `https://api.cynoguard.com/api/auth/user?orgName=${orgToUse}`,
+          { headers: { Authorization: `Bearer ${idToken}` } }
+        );
+        if (!res.ok || cancelled) return;
+
+        const data = await res.json();
+        const projects: { id: string; name: string }[] =
+          data?.data?.org_member_info?.organization?.projects ?? [];
+        const match = projects.find((p) => p.name === projectName) ?? projects[0];
+
+        if (match && !cancelled) {
+          localStorage.setItem("activeProject",   match.name);
+          localStorage.setItem("activeProjectId", match.id);
+        }
+      } catch { /* silent */ }
     });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName, authState.userId, organization]);
+  }, [projectName, organization]);
 
   // Step 3: Sync with Firebase + backend if Redux is empty
   useEffect(() => {
