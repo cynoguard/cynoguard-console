@@ -1,16 +1,15 @@
 "use client"
 
 import {
-  type LucideIcon
+    type LucideIcon
 } from "lucide-react"
 
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
 export function NavGeneralItem({
@@ -24,8 +23,6 @@ export function NavGeneralItem({
     icon: LucideIcon
   }[]
 }) {
-  const { isMobile } = useSidebar()
-
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>

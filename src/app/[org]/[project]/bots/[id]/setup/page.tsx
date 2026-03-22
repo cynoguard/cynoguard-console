@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import axios from "axios"
 import {
-  ArrowLeft,
-  Check,
-  Copy,
-  Loader2,
-  RefreshCw,
-  ShieldCheck,
-  Terminal
+    ArrowLeft,
+    Check,
+    Copy,
+    Loader2,
+    RefreshCw,
+    ShieldCheck,
+    Terminal
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -27,7 +27,6 @@ export default function BotSetupPage() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'pending' | 'connected' | 'already-conected' | 'error'>('pending')
  const [loading,setLoading] = useState(true);
- const [keyData,setKeyData] = useState<Partial<{status:string}>>();
 
   useEffect(()=>{
 
@@ -40,7 +39,6 @@ export default function BotSetupPage() {
         const response = await axios.get(`https://api.cynoguard.com/api/bot-dtection/api-key/${id}`);
         if(response.data.status === "success"){
           console.log(response.data.data)
-           setKeyData(response.data.data);
            if(response.data.data.status === "connected"){
            setConnectionStatus("already-conected")
            }else{

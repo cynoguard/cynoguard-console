@@ -58,12 +58,6 @@ export default function OrgOverviewPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const riskColors: Record<string, string> = {
-    LOW:    "border-green-500/40 text-green-400",
-    MEDIUM: "border-yellow-500/40 text-yellow-400",
-    HIGH:   "border-orange-500/40 text-orange-400",
-  };
-
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
 

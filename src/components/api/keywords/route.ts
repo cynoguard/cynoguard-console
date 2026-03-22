@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server"
 import { mockAlerts } from "@/lib/mock-data"
-import { mockKeywords } from "@/lib/mock-keywords"
+import { NextResponse } from "next/server"
 /** GET /api/keywords */
 export async function GET() {
   await new Promise((resolve) => setTimeout(resolve, 400))

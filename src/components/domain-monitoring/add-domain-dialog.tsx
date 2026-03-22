@@ -1,11 +1,10 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
 import { Globe, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
-import { useAddDomain } from "@/hooks/use-domain-monitoring";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -24,6 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useAddDomain } from "@/hooks/use-domain-monitoring";
 
 // ── Validation ──────────────────────────────────────────────────────
 
@@ -72,8 +72,14 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
     });
 
     const onSubmit = (data: DomainFormValues) => {
+        const parsed = domainSchema.safeParse(data);
+        if (!parsed.success) {
+            toast.error(parsed.error.issues[0]?.message ?? "Please enter valid domain details");
+            return;
+        }
+
         addDomain.mutate(
-            { domain: data.domain, intervalHours: data.intervalHours },
+            { domain: parsed.data.domain, intervalHours: parsed.data.intervalHours },
             {
                 onSuccess: (entry) => {
                     toast.success(`Added ${entry.officialDomainNormalized} to watchlist`);

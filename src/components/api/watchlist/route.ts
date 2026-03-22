@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const intervalHours: number = body.intervalHours ?? 6;
 
     // Normalize domain
-    let normalized = domain
+    const normalized = domain
         .replace(/^https?:\/\//, "")
         .replace(/^www\./, "")
         .replace(/\/.*$/, "")

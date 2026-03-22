@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { auth } from "@/lib/firebase";
@@ -15,7 +14,6 @@ const AuthInitializer = () => {
   const project   = searchParams.get("project");
   const projectId = searchParams.get("projectId");
   const router    = useRouter();
-  const [loading, setLoading]   = useState(true);
   const [error,   setError]     = useState<string | null>(null);
   const hasRun    = useRef(false); // guard against StrictMode double-invoke
   const authState = useSelector((state: RootState) => state.auth);
@@ -31,7 +29,6 @@ const AuthInitializer = () => {
 
       if (!token || !org) {
         setError("Missing authentication parameters.");
-        setLoading(false);
         return;
       }
 
@@ -41,8 +38,6 @@ const AuthInitializer = () => {
 
       try {
         console.log("Token parts:", token.split(".").length); // must be 3
-        const header = JSON.parse(atob(token.split(".")[0]));
-
         const { user } = await signInWithCustomToken(auth, token);
 
         localStorage.setItem("organization", org);
@@ -55,16 +50,16 @@ const AuthInitializer = () => {
         } else {
           router.replace(`/${org}/projects`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Authentication failed.";
         console.error("Auth bridge error:", err);
         hasRun.current = false; // allow retry if navigated back
-        setError(err.message ?? "Authentication failed.");
-        setLoading(false);
+        setError(message);
       }
     };
 
     handleAuth();
-  }, []); // intentionally empty — run once on mount only
+  }, [authState.userId, org, project, projectId, router, token]);
 
   if (error) {
     return (
