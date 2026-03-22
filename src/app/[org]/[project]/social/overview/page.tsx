@@ -2,7 +2,6 @@
 
 import {
   getMentionStats,
-  resolveProjectId,
   triggerScan,
   type MentionStats,
 } from "@/services/api/social-monitoring";
@@ -23,7 +22,6 @@ import {
   TrendingUp,
   CalendarClock,
 } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   Area,
@@ -77,10 +75,6 @@ function KpiCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SocialOverviewPage() {
-  const params    = useParams();
-  const org       = params?.org     as string;
-  const project   = params?.project as string;
-
   const [projectId, setProjectId] = useState<string | null>(null);
   const [stats,     setStats]     = useState<MentionStats | null>(null);
   const [loading,   setLoading]   = useState(true);
@@ -88,13 +82,13 @@ export default function SocialOverviewPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
 
-  // Step 1 — resolve projectId from URL
+  // Read projectId from localStorage (set by app-initializer on login/project switch)
   useEffect(() => {
-    if (!org || !project) return;
-    resolveProjectId(org, project).then(setProjectId);
-  }, [org, project]);
+    const id = localStorage.getItem("activeProjectId");
+    setProjectId(id);
+  }, []);
 
-  // Step 2 — load stats once projectId is known
+  // Load stats once projectId is known
   const load = useCallback(async (isRefresh = false) => {
     if (!projectId) return;
     isRefresh ? setRefreshing(true) : setLoading(true);
