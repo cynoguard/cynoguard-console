@@ -10,29 +10,63 @@ import type {
     ScansQuery,
 } from '@/types/domain-monitoring';
 
+export const DOMAIN_MONITORING_PATHS = {
+    watchlist: '/watchlist',
+    watchlistById: (id: string) => `/watchlist/${id}`,
+    watchlistScan: (id: string) => `/watchlist/${id}/scan`,
+    watchlistFindings: (id: string) => `/watchlist/${id}/findings`,
+    watchlistAlerts: (id: string) => `/watchlist/${id}/alerts`,
+    watchlistScans: (id: string) => `/watchlist/${id}/scans`,
+} as const;
+
+export const DOMAIN_MONITORING_DEMO_WATCHLIST: WatchlistEntry[] = [
+    {
+        id: 'demo-cynoguard',
+        officialDomainRaw: 'cynoguard.com',
+        officialDomainNormalized: 'cynoguard.com',
+        active: true,
+        intervalHours: 6,
+        lastScanAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
+        lastScanStatus: 'success',
+        suspiciousCount: 2,
+    },
+    {
+        id: 'demo-acme',
+        officialDomainRaw: 'acme-security.io',
+        officialDomainNormalized: 'acme-security.io',
+        active: false,
+        intervalHours: 12,
+        lastScanAt: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
+        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
+        lastScanStatus: 'idle',
+        suspiciousCount: 0,
+    },
+];
+
 // ── Watchlist ───────────────────────────────────────────────────────
 
 export async function getWatchlist(): Promise<WatchlistEntry[]> {
-    return apiGet<WatchlistEntry[]>('/watchlist');
+    return apiGet<WatchlistEntry[]>(DOMAIN_MONITORING_PATHS.watchlist);
 }
 
 export async function getWatchlistEntry(id: string): Promise<WatchlistEntry> {
-    return apiGet<WatchlistEntry>(`/watchlist/${id}`);
+    return apiGet<WatchlistEntry>(DOMAIN_MONITORING_PATHS.watchlistById(id));
 }
 
 export async function addDomain(domain: string, intervalHours?: number): Promise<WatchlistEntry> {
-    return apiPost<WatchlistEntry>('/watchlist', { domain, intervalHours });
+    return apiPost<WatchlistEntry>(DOMAIN_MONITORING_PATHS.watchlist, { domain, intervalHours });
 }
 
 export async function updateWatchlistEntry(
     id: string,
     data: { active?: boolean; intervalHours?: number }
 ): Promise<WatchlistEntry> {
-    return apiPatch<WatchlistEntry>(`/watchlist/${id}`, data);
+    return apiPatch<WatchlistEntry>(DOMAIN_MONITORING_PATHS.watchlistById(id), data);
 }
 
 export async function triggerScan(id: string): Promise<{ scanId: string }> {
-    return apiPost<{ scanId: string }>(`/watchlist/${id}/scan`, {});
+    return apiPost<{ scanId: string }>(DOMAIN_MONITORING_PATHS.watchlistScan(id), {});
 }
 
 // ── Findings ────────────────────────────────────────────────────────
@@ -52,7 +86,7 @@ export async function getFindings(
 
     const qs = searchParams.toString();
     return apiGet<PaginatedResponse<Finding>>(
-        `/watchlist/${id}/findings${qs ? `?${qs}` : ''}`
+        `${DOMAIN_MONITORING_PATHS.watchlistFindings(id)}${qs ? `?${qs}` : ''}`
     );
 }
 
@@ -68,7 +102,7 @@ export async function getAlerts(
 
     const qs = searchParams.toString();
     return apiGet<PaginatedResponse<AlertEvent>>(
-        `/watchlist/${id}/alerts${qs ? `?${qs}` : ''}`
+        `${DOMAIN_MONITORING_PATHS.watchlistAlerts(id)}${qs ? `?${qs}` : ''}`
     );
 }
 
@@ -84,6 +118,6 @@ export async function getScans(
 
     const qs = searchParams.toString();
     return apiGet<PaginatedResponse<Scan>>(
-        `/watchlist/${id}/scans${qs ? `?${qs}` : ''}`
+        `${DOMAIN_MONITORING_PATHS.watchlistScans(id)}${qs ? `?${qs}` : ''}`
     );
 }
