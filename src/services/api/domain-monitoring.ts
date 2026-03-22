@@ -1,14 +1,14 @@
-import { apiGet, apiPost, apiPatch } from './client';
 import type {
-    WatchlistEntry,
-    Finding,
     AlertEvent,
-    Scan,
-    PaginatedResponse,
-    FindingsQuery,
     AlertsQuery,
+    Finding,
+    FindingsQuery,
+    PaginatedResponse,
+    Scan,
     ScansQuery,
+    WatchlistEntry,
 } from '@/types/domain-monitoring';
+import { apiGet, apiPatch, apiPost } from './client';
 
 export const DOMAIN_MONITORING_PATHS = {
     watchlist: '/watchlist',
