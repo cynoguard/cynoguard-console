@@ -216,6 +216,7 @@ export function WatchlistOverview() {
     const { data: watchlist, isLoading, isError, refetch } = useWatchlist();
     const [dialogOpen, setDialogOpen] = useState(false);
     const isClient = useIsClient();
+    const watchlistEntries = Array.isArray(watchlist) ? watchlist : [];
 
     return (
         <div className="space-y-6">
@@ -266,7 +267,7 @@ export function WatchlistOverview() {
                         </Button>
                     </CardContent>
                 </Card>
-            ) : !watchlist || watchlist.length === 0 ? (
+            ) : watchlistEntries.length === 0 ? (
                 <EmptyState onAdd={() => setDialogOpen(true)} />
             ) : (
                 <Card>
@@ -287,7 +288,7 @@ export function WatchlistOverview() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {watchlist.map((entry) => (
+                                {watchlistEntries.map((entry) => (
                                     <TableRow key={entry.id} className="group">
                                         <TableCell>
                                             <Link
