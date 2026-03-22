@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 
 import {
@@ -44,6 +45,9 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function FeedPage() {
+  const params  = useParams();
+  const project = params?.project as string;
+
   const [projectId,       setProjectId]       = useState<string | null>(null);
   const [mentions,        setMentions]        = useState<BrandMention[]>([]);
   const [total,           setTotal]           = useState(0);
@@ -54,11 +58,60 @@ export default function FeedPage() {
   const [sentimentFilter, setSentimentFilter] = useState("ALL");
   const [statusFilter,    setStatusFilter]    = useState("ALL");
 
-  // Read projectId from localStorage (set by app-initializer)
+  // Resolve projectId by calling the server directly with orgId + project name
+  // organizationId is always in localStorage from login — never changes per session
   useEffect(() => {
-    const id = localStorage.getItem("activeProjectId");
-    setProjectId(id);
-  }, []);
+    if (!project) return;
+    let cancelled = false;
+
+    const resolve = async () => {
+      // 1. Try localStorage first (fastest path)
+      const cached        = localStorage.getItem("activeProjectId");
+      const cachedProject = localStorage.getItem("activeProject");
+      if (cached && cachedProject === project) {
+        setProjectId(cached);
+        return;
+      }
+
+      // 2. Fetch from server using organizationId (always set at login)
+      try {
+        const orgId = localStorage.getItem("organizationId");
+        if (!orgId) {
+          // fallback to whatever is cached
+          if (cached) setProjectId(cached);
+          return;
+        }
+
+        const res = await fetch(
+          `https://api.cynoguard.com/api/organization/${orgId}/projects`
+        );
+        if (!res.ok || cancelled) return;
+
+        const data = await res.json();
+        const projects: { id: string; name: string }[] =
+          data?.data?.projects?.projects ??
+          data?.data?.projects ??
+          [];
+
+        const match = projects.find(
+          (p) => p.name === project || p.name.toLowerCase() === project.toLowerCase()
+        ) ?? projects[0];
+
+        if (match && !cancelled) {
+          localStorage.setItem("activeProject",   match.name);
+          localStorage.setItem("activeProjectId", match.id);
+          setProjectId(match.id);
+        }
+      } catch {
+        // last resort fallback
+        const fallback = localStorage.getItem("activeProjectId");
+        if (fallback && !cancelled) setProjectId(fallback);
+      }
+    };
+
+    resolve();
+    return () => { cancelled = true; };
+  }, [project]);
 
   // Load mentions
   const load = useCallback(async (isRefresh = false) => {

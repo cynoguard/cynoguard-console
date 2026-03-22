@@ -1,3 +1,4 @@
+import { useParams } from "next/navigation";
 "use client";
 
 import {
@@ -75,6 +76,9 @@ function KpiCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SocialOverviewPage() {
+  const params  = useParams();
+  const project = params?.project as string;
+
   const [projectId, setProjectId] = useState<string | null>(null);
   const [stats,     setStats]     = useState<MentionStats | null>(null);
   const [loading,   setLoading]   = useState(true);
@@ -82,11 +86,60 @@ export default function SocialOverviewPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
 
-  // Read projectId from localStorage (set by app-initializer on login/project switch)
+  // Resolve projectId by calling the server directly with orgId + project name
+  // organizationId is always in localStorage from login — never changes per session
   useEffect(() => {
-    const id = localStorage.getItem("activeProjectId");
-    setProjectId(id);
-  }, []);
+    if (!project) return;
+    let cancelled = false;
+
+    const resolve = async () => {
+      // 1. Try localStorage first (fastest path)
+      const cached        = localStorage.getItem("activeProjectId");
+      const cachedProject = localStorage.getItem("activeProject");
+      if (cached && cachedProject === project) {
+        setProjectId(cached);
+        return;
+      }
+
+      // 2. Fetch from server using organizationId (always set at login)
+      try {
+        const orgId = localStorage.getItem("organizationId");
+        if (!orgId) {
+          // fallback to whatever is cached
+          if (cached) setProjectId(cached);
+          return;
+        }
+
+        const res = await fetch(
+          `https://api.cynoguard.com/api/organization/${orgId}/projects`
+        );
+        if (!res.ok || cancelled) return;
+
+        const data = await res.json();
+        const projects: { id: string; name: string }[] =
+          data?.data?.projects?.projects ??
+          data?.data?.projects ??
+          [];
+
+        const match = projects.find(
+          (p) => p.name === project || p.name.toLowerCase() === project.toLowerCase()
+        ) ?? projects[0];
+
+        if (match && !cancelled) {
+          localStorage.setItem("activeProject",   match.name);
+          localStorage.setItem("activeProjectId", match.id);
+          setProjectId(match.id);
+        }
+      } catch {
+        // last resort fallback
+        const fallback = localStorage.getItem("activeProjectId");
+        if (fallback && !cancelled) setProjectId(fallback);
+      }
+    };
+
+    resolve();
+    return () => { cancelled = true; };
+  }, [project]);
 
   // Load stats once projectId is known
   const load = useCallback(async (isRefresh = false) => {
