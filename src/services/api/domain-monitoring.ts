@@ -19,31 +19,6 @@ export const DOMAIN_MONITORING_PATHS = {
     watchlistScans: (id: string) => `/watchlist/${id}/scans`,
 } as const;
 
-export const DOMAIN_MONITORING_DEMO_WATCHLIST: WatchlistEntry[] = [
-    {
-        id: 'demo-cynoguard',
-        officialDomainRaw: 'cynoguard.com',
-        officialDomainNormalized: 'cynoguard.com',
-        active: true,
-        intervalHours: 6,
-        lastScanAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
-        lastScanStatus: 'success',
-        suspiciousCount: 2,
-    },
-    {
-        id: 'demo-acme',
-        officialDomainRaw: 'acme-security.io',
-        officialDomainNormalized: 'acme-security.io',
-        active: false,
-        intervalHours: 12,
-        lastScanAt: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
-        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
-        lastScanStatus: 'idle',
-        suspiciousCount: 0,
-    },
-];
-
 // ── Watchlist ───────────────────────────────────────────────────────
 
 export async function getWatchlist(): Promise<WatchlistEntry[]> {

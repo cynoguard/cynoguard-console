@@ -78,35 +78,6 @@ export interface CreateWatchlistInput {
   tldSuspicious?:       string[];
 }
 
-const DOMAIN_MONITORING_DEMO_WATCHLIST: WatchlistEntry[] = [
-  {
-    id: "demo-cynoguard",
-    officialDomainRaw: "cynoguard.com",
-    officialDomainNormalized: "cynoguard.com",
-    label: "Primary Domain",
-    active: true,
-    intervalHours: 6,
-    lastScanAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
-    lastScanStatus: "success",
-    nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
-    suspiciousCount: 2,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-  },
-  {
-    id: "demo-acme-security",
-    officialDomainRaw: "acme-security.io",
-    officialDomainNormalized: "acme-security.io",
-    label: "Campaign Domain",
-    active: false,
-    intervalHours: 12,
-    lastScanAt: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
-    lastScanStatus: "error",
-    nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 3).toISOString(),
-    suspiciousCount: 0,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-  },
-];
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -230,26 +201,180 @@ function normalizeScanLog(raw: unknown): ScanLog {
   };
 }
 
+function toPaginated<T>(
+  response: unknown,
+  keys: string[],
+  mapItem: (item: unknown) => T,
+  fallbackPage = 1,
+  fallbackPageSize = 10
+): { items: T[]; page: number; pageSize: number; total: number } {
+  const items = unwrapArray(response, keys).map(mapItem);
+  const container = isRecord(response) ? response : {};
+  const page = toNumberSafe(container.page, fallbackPage);
+  const pageSize = toNumberSafe(container.pageSize ?? container.page_size, fallbackPageSize);
+  const total = toNumberSafe(container.total, items.length);
+  return { items, page, pageSize, total };
+}
+
+export interface Finding {
+  id: string;
+  candidateDomain: string;
+  similarityScore: number;
+  levenshteinDistance: number;
+  isLive: boolean;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  dnsSignals?: {
+    hasA?: boolean;
+    hasAAAA?: boolean;
+    hasCNAME?: boolean;
+    hasNS?: boolean;
+    hasMX?: boolean;
+  };
+  whoisSignals?: {
+    isRegistered?: boolean;
+    registrar?: string;
+    createdAt?: string;
+    expiresAt?: string;
+    whoisStatus?: "ok" | "error" | "unknown";
+  };
+  sslSignals?: {
+    sslStatus?: "valid" | "expired" | "not_found" | "unknown";
+    expiresAt?: string;
+  };
+  riskReason?: string[];
+}
+
+export interface AlertEvent {
+  id: string;
+  candidateDomain: string;
+  triggeredAt: string;
+  reason: string;
+  payload: Record<string, unknown>;
+}
+
+export interface Scan {
+  id: string;
+  startedAt: string;
+  finishedAt?: string;
+  status: "running" | "success" | "error";
+  totals: {
+    totalCandidates: number;
+    totalLiveFound: number;
+    errors: number;
+  };
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface FindingsQuery {
+  query?: string;
+  minSimilarity?: number;
+  isLive?: boolean;
+  sort?: "similarity_desc" | "last_seen_desc" | "first_seen_desc";
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AlertsQuery {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ScansQuery {
+  page?: number;
+  pageSize?: number;
+}
+
+function normalizeFinding(raw: unknown): Finding {
+  const data = isRecord(raw) ? raw : {};
+  const dnsSignals = isRecord(data.dnsSignals)
+    ? data.dnsSignals
+    : isRecord(data.dns_signals)
+      ? data.dns_signals
+      : undefined;
+  const whoisSignals = isRecord(data.whoisSignals)
+    ? data.whoisSignals
+    : isRecord(data.whois_signals)
+      ? data.whois_signals
+      : undefined;
+  const sslSignals = isRecord(data.sslSignals)
+    ? data.sslSignals
+    : isRecord(data.ssl_signals)
+      ? data.ssl_signals
+      : undefined;
+
+  return {
+    id: toStringSafe(data.id),
+    candidateDomain: toStringSafe(data.candidateDomain ?? data.candidate_domain ?? data.domain),
+    similarityScore: toNumberSafe(data.similarityScore ?? data.similarity_score, 0),
+    levenshteinDistance: toNumberSafe(data.levenshteinDistance ?? data.levenshtein_distance, 0),
+    isLive: Boolean(data.isLive ?? data.is_live ?? false),
+    firstSeenAt: toStringSafe(data.firstSeenAt ?? data.first_seen_at, new Date().toISOString()),
+    lastSeenAt: toStringSafe(data.lastSeenAt ?? data.last_seen_at, new Date().toISOString()),
+    dnsSignals: dnsSignals as Finding["dnsSignals"],
+    whoisSignals: whoisSignals as Finding["whoisSignals"],
+    sslSignals: sslSignals as Finding["sslSignals"],
+    riskReason: Array.isArray(data.riskReason)
+      ? data.riskReason.map((v) => String(v))
+      : Array.isArray(data.risk_reason)
+        ? data.risk_reason.map((v) => String(v))
+        : [],
+  };
+}
+
+function normalizeAlert(raw: unknown): AlertEvent {
+  const data = isRecord(raw) ? raw : {};
+  return {
+    id: toStringSafe(data.id),
+    candidateDomain: toStringSafe(data.candidateDomain ?? data.candidate_domain ?? data.domain),
+    triggeredAt: toStringSafe(data.triggeredAt ?? data.triggered_at, new Date().toISOString()),
+    reason: toStringSafe(data.reason, "Suspicious activity detected"),
+    payload: isRecord(data.payload) ? data.payload : {},
+  };
+}
+
+function normalizeScan(raw: unknown): Scan {
+  const data = isRecord(raw) ? raw : {};
+  const totals = isRecord(data.totals) ? data.totals : {};
+  const statusRaw = toStringSafe(data.status ?? data.scanStatus ?? data.scan_status, "success");
+  const status: Scan["status"] =
+    statusRaw === "running" || statusRaw === "success" || statusRaw === "error" ? statusRaw : "success";
+
+  return {
+    id: toStringSafe(data.id),
+    startedAt: toStringSafe(data.startedAt ?? data.started_at ?? data.scannedAt ?? data.scanned_at, new Date().toISOString()),
+    finishedAt: toStringSafe(data.finishedAt ?? data.finished_at, "") || undefined,
+    status,
+    totals: {
+      totalCandidates: toNumberSafe(totals.totalCandidates ?? totals.total_candidates ?? data.candidatesFound ?? data.candidates_found, 0),
+      totalLiveFound: toNumberSafe(totals.totalLiveFound ?? totals.total_live_found ?? data.newFound ?? data.new_found, 0),
+      errors: toNumberSafe(totals.errors, status === "error" ? 1 : 0),
+    },
+  };
+}
+
 // ─── Watchlist ────────────────────────────────────────────────────────────────
 
 export async function getWatchlist(): Promise<WatchlistEntry[]> {
-  try {
-    const { orgId, projectId } = ctx();
-    const response = await api<unknown>(`/api/v1/orgs/${orgId}/projects/${projectId}/watchlist`);
-    const rows = unwrapArray(response, ["items", "data", "results", "watchlist", "entries"]);
-    if (rows.length > 0) {
-      return rows.map(normalizeWatchlistEntry);
-    }
-
-    // Some backends return a single object for one-entry watchlists.
-    if (isRecord(response)) {
-      return [normalizeWatchlistEntry(response)];
-    }
-  } catch {
-    // Preserve API call flow, but allow local demo rendering when backend/context is unavailable.
+  const { orgId, projectId } = ctx();
+  const response = await api<unknown>(`/api/v1/orgs/${orgId}/projects/${projectId}/watchlist`);
+  const rows = unwrapArray(response, ["items", "data", "results", "watchlist", "entries"]);
+  if (rows.length > 0) {
+    return rows.map(normalizeWatchlistEntry);
   }
 
-  return DOMAIN_MONITORING_DEMO_WATCHLIST;
+  // Some backends return a single object for one-entry watchlists.
+  if (isRecord(response)) {
+    return [normalizeWatchlistEntry(response)];
+  }
+
+  return [];
 }
 
 export async function getWatchlistEntry(watchlistId: string): Promise<WatchlistDetail> {
@@ -316,4 +441,59 @@ export async function getScanLogs(watchlistId: string): Promise<{ logs: ScanLog[
   const response = await api<unknown>(`/api/v1/orgs/${orgId}/projects/${projectId}/watchlist/${watchlistId}/scans`);
   const logs = unwrapArray(response, ["logs", "items", "data", "results", "scans"]);
   return { logs: logs.map(normalizeScanLog) };
+}
+
+export async function getFindings(
+  watchlistId: string,
+  params?: FindingsQuery
+): Promise<PaginatedResponse<Finding>> {
+  const { orgId, projectId } = ctx();
+  const searchParams = new URLSearchParams();
+  if (params?.query) searchParams.set("query", params.query);
+  if (params?.minSimilarity !== undefined) searchParams.set("minSimilarity", String(params.minSimilarity));
+  if (params?.isLive !== undefined) searchParams.set("isLive", String(params.isLive));
+  if (params?.sort) searchParams.set("sort", params.sort);
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.pageSize) searchParams.set("pageSize", String(params.pageSize));
+
+  const qs = searchParams.toString();
+  const response = await api<unknown>(
+    `/api/v1/orgs/${orgId}/projects/${projectId}/watchlist/${watchlistId}/findings${qs ? `?${qs}` : ""}`
+  );
+
+  return toPaginated(response, ["items", "data", "results", "findings"], normalizeFinding, params?.page ?? 1, params?.pageSize ?? 10);
+}
+
+export async function getAlerts(
+  watchlistId: string,
+  params?: AlertsQuery
+): Promise<PaginatedResponse<AlertEvent>> {
+  const { orgId, projectId } = ctx();
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.pageSize) searchParams.set("pageSize", String(params.pageSize));
+
+  const qs = searchParams.toString();
+  const response = await api<unknown>(
+    `/api/v1/orgs/${orgId}/projects/${projectId}/watchlist/${watchlistId}/alerts${qs ? `?${qs}` : ""}`
+  );
+
+  return toPaginated(response, ["items", "data", "results", "alerts"], normalizeAlert, params?.page ?? 1, params?.pageSize ?? 10);
+}
+
+export async function getScans(
+  watchlistId: string,
+  params?: ScansQuery
+): Promise<PaginatedResponse<Scan>> {
+  const { orgId, projectId } = ctx();
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.pageSize) searchParams.set("pageSize", String(params.pageSize));
+
+  const qs = searchParams.toString();
+  const response = await api<unknown>(
+    `/api/v1/orgs/${orgId}/projects/${projectId}/watchlist/${watchlistId}/scans${qs ? `?${qs}` : ""}`
+  );
+
+  return toPaginated(response, ["items", "data", "results", "scans", "logs"], normalizeScan, params?.page ?? 1, params?.pageSize ?? 10);
 }
