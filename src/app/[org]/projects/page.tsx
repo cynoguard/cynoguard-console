@@ -72,7 +72,7 @@ export default function ProjectsPage() {
         }
 
         const response = await axios.get(
-          `http://localhost:4000/api/organization/${orgId}/projects`,
+          `https://api.cynoguard.com/api/organization/${orgId}/projects`,
           { headers: { Authorization: `Bearer ${idToken}` } }
         );
 
@@ -111,7 +111,7 @@ export default function ProjectsPage() {
       const orgId = localStorage.getItem("organizationId");
 
       const response = await axios.post(
-        `http://localhost:4000/api/organization/${orgId}/projects`,
+        `https://api.cynoguard.com/api/organization/${orgId}/projects`,
         {
           name:        projectName.trim().toLowerCase(),
           primaryDomain: domain.trim(),

@@ -1,5 +1,7 @@
 'use client';
 
+import { useProjectId } from '@/hooks/use-project-id';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import {
-  fetchMentions, updateMentionStatus,
+  getMentions, resolveMention,
   type BrandMention, type MentionStatus, type RiskLevel, type Sentiment,
 } from '@/services/api/social-monitoring';
 import { RefreshCw } from 'lucide-react';
@@ -36,10 +38,13 @@ export default function FeedPage() {
   const [statusFilter,    setStatusFilter]    = useState('ALL');
   const { toast } = useToast();
 
+  const { projectId } = useProjectId();
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchMentions({
+      const pid = projectId || localStorage.getItem('activeProjectId') || '';
+      const res = await getMentions(pid, {
         limit:     50,
         riskLevel: riskFilter      !== 'ALL' ? riskFilter      as RiskLevel     : undefined,
         sentiment: sentimentFilter !== 'ALL' ? sentimentFilter as Sentiment     : undefined,
@@ -52,13 +57,14 @@ export default function FeedPage() {
     } finally {
       setLoading(false);
     }
-  }, [riskFilter, sentimentFilter, statusFilter, toast]);
+  }, [projectId, riskFilter, sentimentFilter, statusFilter, toast]);
 
   useEffect(() => { load(); }, [load]);
 
   async function handleResolve(mentionId: string) {
     try {
-      await updateMentionStatus(mentionId, 'DISMISSED');
+      const pid = projectId || localStorage.getItem('activeProjectId') || '';
+    await resolveMention(pid, mentionId);
       setMentions((prev) =>
         prev.map((m) => m.id === mentionId ? { ...m, status: 'DISMISSED' } : m)
       );

@@ -38,7 +38,7 @@ export default function OrganizationPage() {
       try {
         setIsLoading(true);
         const response = await axios.get(
-          `http://127.0.0.1:4000/api/organizations/${authId}`
+          `https://api.cynoguard.com/api/organizations/${authId}`
         );
 
         if (response.data.status === "success") {

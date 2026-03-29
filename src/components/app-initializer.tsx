@@ -20,7 +20,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
   const apiCallStateRef = useRef<"idle" | "pending" | "done">("idle");
 
   // Resolve org + project from URL params
-  const organization  = (params?.organization as string) || pathname.split("/")[1];
+  const organization  = (params?.org as string) || pathname.split("/")[1];
   const projectName   = (params?.project as string)      || pathname.split("/")[2];
 
   // Step 1: Restore Redux from localStorage on mount
@@ -46,6 +46,45 @@ export default function AppInitializer({ children }: { children: React.ReactNode
       localStorage.removeItem("auth");
     }
   }, [authState]);
+
+  // Step 3a: Update activeProjectId whenever URL project/org changes
+  // Uses onAuthStateChanged so it works even when auth.currentUser is null on refresh
+  useEffect(() => {
+    if (!projectName) return;
+    const orgToUse = organization || localStorage.getItem("organization");
+    if (!orgToUse) return;
+
+    let cancelled = false;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user || cancelled) return;
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch(
+          `https://api.cynoguard.com/api/auth/user?orgName=${orgToUse}`,
+          { headers: { Authorization: `Bearer ${idToken}` } }
+        );
+        if (!res.ok || cancelled) return;
+
+        const data = await res.json();
+        const projects: { id: string; name: string }[] =
+          data?.data?.org_member_info?.organization?.projects ?? [];
+        const match = projects.find((p) => p.name === projectName) ?? projects[0];
+
+        if (match && !cancelled) {
+          localStorage.setItem("activeProject",   match.name);
+          localStorage.setItem("activeProjectId", match.id);
+        }
+      } catch { /* silent */ }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName, organization]);
 
   // Step 3: Sync with Firebase + backend if Redux is empty
   useEffect(() => {

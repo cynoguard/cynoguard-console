@@ -9,9 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import {
-  createKeyword,
+  addKeyword,
   getKeywords,
-  patchKeyword, removeKeyword,
+  toggleKeyword, deleteKeyword,
   type Keyword,
 } from "@/services/api/social-monitoring";
 import { Hash, Inbox, Loader2, Plus, Trash2 } from "lucide-react";
@@ -53,7 +53,7 @@ export function KeywordManager({ projectId }: Props) {
 
     for (const value of values) {
       try {
-        const created = await createKeyword(projectId, value);
+        const created = await addKeyword(projectId, value);
         setKeywords((prev) => [created, ...prev]);
         ok++;
       } catch (err) {
@@ -77,7 +77,7 @@ export function KeywordManager({ projectId }: Props) {
 
   async function handleToggle(kw: Keyword) {
     try {
-      const updated = await patchKeyword(projectId, kw.id, !kw.isActive);
+      const updated = await toggleKeyword(projectId, kw.id, !kw.isActive);
       setKeywords((prev) => prev.map((k) => (k.id === kw.id ? updated : k)));
     } catch {
       toast({ title: "Error", description: "Failed to update keyword.", variant: "destructive" });
@@ -87,7 +87,7 @@ export function KeywordManager({ projectId }: Props) {
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
-      await removeKeyword(projectId, id);
+      await deleteKeyword(projectId, id);
       setKeywords((prev) => prev.filter((k) => k.id !== id));
       toast({ title: "Deleted", description: "Keyword removed." });
     } catch {

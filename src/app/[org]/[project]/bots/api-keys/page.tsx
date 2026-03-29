@@ -42,7 +42,7 @@ import {
     Trash2,
     Zap
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -58,6 +58,7 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const router = useRouter();
+  const { org, project } = useParams() as { org: string; project: string };
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
@@ -75,7 +76,7 @@ export default function ApiKeysPage() {
     if (!projectId) return;
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:4000/api/bot-dtection/api-keys/${projectId}/list`);
+      const response = await axios.get(`https://api.cynoguard.com/api/bot-dtection/api-keys/${projectId}/list`);
       if (response.data.status === "success") {
         setApiKeysList(response.data.data);
       } else {
@@ -98,19 +99,34 @@ export default function ApiKeysPage() {
 
     setIsCreating(true);
     try {
-      const response = await axios.post("http://localhost:4000/api/bot-dtection/api-key", {
+      const response = await axios.post("https://api.cynoguard.com/api/bot-dtection/api-key", {
         projectId,
         name: newKeyName,
       });
 
       if (response.data.status === "success") {
         toast.success(`Key "${newKeyName}" created`);
-        if (response.data.data.api_key) {
-          sessionStorage.setItem("onetime-api-key", response.data.data.api_key);
+
+        // Store the one-time API key before navigating
+        const apiKeyValue = response.data.data?.api_key;
+        const keyId       = response.data.data?.id;
+
+        if (apiKeyValue) {
+          sessionStorage.setItem("onetime-api-key", apiKeyValue);
         }
+
         setIsDialogOpen(false);
         setNewKeyName("");
-        router.push(`/cynoguard/cynoguard-main/bots/${response.data.data.id}/setup`);
+
+        if (!keyId) {
+          // id missing — refresh list instead of navigating to a broken URL
+          console.error("API key created but id is missing from response:", response.data);
+          toast.error("Key created but setup page unavailable — please use View Setup from the table.");
+          fetchApiKeys();
+          return;
+        }
+
+        router.push(`/${org}/${project}/bots/${keyId}/setup`);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
@@ -123,7 +139,7 @@ export default function ApiKeysPage() {
     if (!selectedKey) return;
     setIsRevoking(true);
     try {
-      const response = await axios.delete(`http://localhost:4000/api/bot-dtection/api-keys/${selectedKey.id}`);
+      const response = await axios.delete(`https://api.cynoguard.com/api/bot-dtection/api-keys/${selectedKey.id}`);
       if (response.data.status === "success") {
         toast.success("API Key revoked successfully");
         setIsRevokeOpen(false);
@@ -241,7 +257,10 @@ export default function ApiKeysPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                        <DropdownMenuItem onClick={() => router.push(`/cynoguard/cynoguard-main/bots/${apiKey.id}/setup`)} className="gap-2 text-xs cursor-pointer">
+                        <DropdownMenuItem onClick={() => {
+                            if (!apiKey.id) { toast.error("Key ID missing"); return; }
+                            router.push(`/${org}/${project}/bots/${apiKey.id}/setup`);
+                          }} className="gap-2 text-xs cursor-pointer">
                           <ExternalLink className="h-3.5 w-3.5" /> View Setup
                         </DropdownMenuItem>
                         <DropdownMenuItem 

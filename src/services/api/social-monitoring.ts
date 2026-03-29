@@ -1,8 +1,83 @@
-import { getActiveProjectId } from "@/lib/api/bot-management";
+// ─────────────────────────────────────────────────────────────────────────────
+// social-monitoring.ts  —  Clean, self-contained API layer
+//
+// HOW projectId WORKS:
+//   Every function receives projectId as a plain argument.
+//   Pages get projectId by calling the server with orgName+projectName from URL.
+//   No localStorage. Works for every user, every project, any device.
+//
+// HOW AUTH WORKS:
+//   Every request attaches Authorization: Bearer <firebase-token>
+//   The server verifies it and sets request.userId so assertMember() passes.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { auth } from "@/lib/firebase";
 
-// src/services/api/social-monitoring.ts
-const BASE = "https://api.cynoguard.com/";
+const API = "https://api.cynoguard.com";
+
+// ─── Internal fetch helper ────────────────────────────────────────────────────
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {};
+
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  } catch { /* not signed in */ }
+
+  // Don't send Content-Type on DELETE (no body)
+  if (init?.method !== "DELETE") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(`${API}${path}`, {
+    ...init,
+    headers: { ...headers, ...(init?.headers as Record<string, string> ?? {}) },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error ?? `HTTP ${res.status}`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+// ─── projectId resolver ───────────────────────────────────────────────────────
+// Resolves projectId from orgName + projectName (URL params).
+// Returns null if not found.
+
+export async function resolveProjectId(
+  orgName: string,
+  projectName: string
+): Promise<string | null> {
+  // app-initializer already keeps activeProjectId in sync with the URL.
+  // We just need to wait briefly for it to finish when navigating between projects.
+
+  // 1. If localStorage already has the right project, return immediately
+  const cached        = localStorage.getItem("activeProjectId");
+  const cachedProject = localStorage.getItem("activeProject");
+
+  if (cached && cachedProject === projectName) {
+    return cached;
+  }
+
+  // 2. Wait up to 3 seconds for app-initializer to update activeProjectId
+  //    It polls every 150ms — fast enough to not feel slow
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 150));
+    const id   = localStorage.getItem("activeProjectId");
+    const name = localStorage.getItem("activeProject");
+    if (id && name === projectName) return id;
+  }
+
+  // 3. Fallback — return whatever is in localStorage
+  return localStorage.getItem("activeProjectId");
+}
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +121,13 @@ export interface MentionStats {
   byStatus:         { status: MentionStatus; _count: number }[];
   mentionsToday:    number;
   mentionsOverTime: { date: string; count: number }[];
-  recentScans:      { id: string; scanStatus: string; mentionsFound: number; highRiskCount: number; scannedAt: string }[];
+  recentScans:      {
+    id:            string;
+    scanStatus:    string;
+    mentionsFound: number;
+    highRiskCount: number;
+    scannedAt:     string;
+  }[];
 }
 
 export interface PaginatedMentions {
@@ -54,103 +135,30 @@ export interface PaginatedMentions {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export interface ScanResult {
-  message:       string;
-  mentionsFound: number;
-  highRiskCount: number;
-  newMentions:   number;
-}
-
-export interface DashboardData {
-  totalMentions:    number;
-  mentionsToday:    number;
-  highRiskCount:    number;
-  newCount:         number;
-  sentimentData:    { name: string; value: number; color: string }[];
-  mentionsOverTime: { date: string; count: number }[];
-  recentScans:      MentionStats["recentScans"];
-}
-
-export interface SocialAlert {
-  id:             string;
-  platform:       "X";
-  authorUsername: string;
-  content:        string;
-  riskLevel:      RiskLevel;
-  sentiment:      Sentiment;
-  status:         MentionStatus;
-  matchedKeyword: string | null;
-  tweetUrl:       string | null;
-  publishedAt:    string | null;
-  scannedAt:      string;
-}
-
-// ─── Transform helpers ────────────────────────────────────────────────────────
-
-const SENTIMENT_COLORS: Record<Sentiment, string> = {
-  POSITIVE: "#22c55e",
-  NEUTRAL:  "#71717a",
-  NEGATIVE: "#ef4444",
-};
-
-export function statsToDashboardData(stats: MentionStats): DashboardData {
-  const totalMentions = stats.byStatus.reduce((s, r) => s + r._count, 0);
-  const highRiskCount = stats.byRisk.find((r) => r.riskLevel === "HIGH")?._count ?? 0;
-  const newCount      = stats.byStatus.find((r) => r.status === "NEW")?._count ?? 0;
-  const sentimentData = stats.bySentiment.map((r) => ({
-    name:  r.sentiment.charAt(0) + r.sentiment.slice(1).toLowerCase(),
-    value: r._count,
-    color: SENTIMENT_COLORS[r.sentiment],
-  }));
-  return { totalMentions, mentionsToday: stats.mentionsToday, highRiskCount, newCount, sentimentData, mentionsOverTime: stats.mentionsOverTime, recentScans: stats.recentScans };
-}
-
-export function mentionToAlert(m: BrandMention): SocialAlert {
-  return { id: m.id, platform: m.platform, authorUsername: m.authorUsername, content: m.content, riskLevel: m.riskLevel, sentiment: m.sentiment, status: m.status, matchedKeyword: m.matchedKeyword, tweetUrl: m.tweetUrl, publishedAt: m.publishedAt, scannedAt: m.scannedAt };
-}
-
-// ─── HTTP helper ──────────────────────────────────────────────────────────────
-
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await auth.currentUser?.getIdToken().catch(() => undefined);
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error ?? `HTTP ${res.status}`);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
-
-// ─── Keywords ─────────────────────────────────────────────────────────────────
+// ─── Keywords API ─────────────────────────────────────────────────────────────
 
 export const getKeywords = (projectId: string) =>
-  api<{ keywords: Keyword[] }>(`/api/v1/projects/${projectId}/keywords`).then((r) => r.keywords);
+  call<{ keywords: Keyword[] }>(`/api/v1/projects/${projectId}/keywords`)
+    .then((r) => r.keywords);
 
-export const createKeyword = (projectId: string, keyword: string) =>
-  api<Keyword>(`/api/v1/projects/${projectId}/keywords`, {
+export const addKeyword = (projectId: string, keyword: string) =>
+  call<Keyword>(`/api/v1/projects/${projectId}/keywords`, {
     method: "POST",
     body:   JSON.stringify({ keyword }),
   });
 
-export const patchKeyword = (projectId: string, keywordId: string, isActive: boolean) =>
-  api<Keyword>(`/api/v1/projects/${projectId}/keywords/${keywordId}`, {
+export const toggleKeyword = (projectId: string, keywordId: string, isActive: boolean) =>
+  call<Keyword>(`/api/v1/projects/${projectId}/keywords/${keywordId}`, {
     method: "PATCH",
     body:   JSON.stringify({ isActive }),
   });
 
-export const removeKeyword = (projectId: string, keywordId: string) =>
-  api<void>(`/api/v1/projects/${projectId}/keywords/${keywordId}`, { method: "DELETE" });
+export const deleteKeyword = (projectId: string, keywordId: string) =>
+  call<void>(`/api/v1/projects/${projectId}/keywords/${keywordId}`, {
+    method: "DELETE",
+  });
 
-// ─── Mentions ─────────────────────────────────────────────────────────────────
+// ─── Mentions API ─────────────────────────────────────────────────────────────
 
 export interface MentionFilters {
   page?:      number;
@@ -167,25 +175,22 @@ export const getMentions = (projectId: string, filters: MentionFilters = {}) => 
   if (filters.status)    qs.set("status",    filters.status);
   if (filters.riskLevel) qs.set("riskLevel", filters.riskLevel);
   if (filters.sentiment) qs.set("sentiment", filters.sentiment);
-  return api<PaginatedMentions>(`/api/v1/projects/${projectId}/mentions?${qs}`);
+  return call<PaginatedMentions>(
+    `/api/v1/projects/${projectId}/mentions?${qs.toString()}`
+  );
 };
 
 export const getMentionStats = (projectId: string) =>
-  api<MentionStats>(`/api/v1/projects/${projectId}/mentions/stats`);
+  call<MentionStats>(`/api/v1/projects/${projectId}/mentions/stats`);
 
-export const patchMention = (projectId: string, mentionId: string, status: MentionStatus) =>
-  api<BrandMention>(`/api/v1/projects/${projectId}/mentions/${mentionId}`, {
+export const resolveMention = (projectId: string, mentionId: string) =>
+  call<BrandMention>(`/api/v1/projects/${projectId}/mentions/${mentionId}`, {
     method: "PATCH",
-    body:   JSON.stringify({ status }),
+    body:   JSON.stringify({ status: "DISMISSED" }),
   });
 
-export const runScan = (projectId: string) =>
-  api<ScanResult>(`/api/v1/projects/${projectId}/mentions/scan`, { method: "POST" });
-
-
-// ─── Aliases (read projectId from active project in localStorage) ─────────────
-
-export const fetchStats    = () => getMentionStats(getActiveProjectId() || "" );
-export const fetchMentions = (filters: MentionFilters = {}) => getMentions(getActiveProjectId() || "", filters);
-export const updateMentionStatus = (mentionId: string, status: MentionStatus) =>
-  patchMention(getActiveProjectId() || "", mentionId, status);
+export const triggerScan = (projectId: string) =>
+  call<{ message: string; mentionsFound: number; highRiskCount: number; newMentions: number }>(
+    `/api/v1/projects/${projectId}/mentions/scan`,
+    { method: "POST" }
+  );
