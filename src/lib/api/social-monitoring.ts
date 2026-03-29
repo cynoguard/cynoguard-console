@@ -4,7 +4,7 @@
 
 import { auth } from "@/lib/firebase";
 
-const BASE = "/api";
+const BASE = "https://api.cynoguard.com";
 
 export const getActiveProjectId = (): string | null => {
   if (typeof window === "undefined") return null;
