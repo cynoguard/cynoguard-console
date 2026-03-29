@@ -292,7 +292,7 @@ export function WatchlistOverview() {
                                     <TableRow key={entry.id} className="group">
                                         <TableCell>
                                             <Link
-                                                href={`/dashboard/domain-monitoring/${entry.id}`}
+                                                href={`/domain-monitoring/${entry.id}`}
                                                 className="font-medium hover:text-primary transition-colors"
                                             >
                                                 {entry.officialDomainNormalized}

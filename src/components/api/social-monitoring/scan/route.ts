@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server";
 
-const BACKEND = process.env.BACKEND_URL ?? "http://localhost:4000";
+const BACKEND = "https://api.cynoguard.com";
 const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? "test-project-001";
 
 export async function POST() {
