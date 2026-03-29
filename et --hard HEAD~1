@@ -1,0 +1,10 @@
+[33m7fcff17[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m)[m up
+[33m4997c34[m update social api base url selections
+[33m1031f7f[m Merge branch 'main' into dev
+[33m9b3e178[m implement auth headers for social media monitoring
+[33m233c174[m Merge pull request #21 from cynoguard/dev
+[33m92ea3eb[m feat(domain-monitoring): switch to production APIs and remove mock watchlist routes
+[33mf71377c[m Merge pull request #20 from cynoguard/dev
+[33m25a4547[m feat(domain-monitoring): fallback to demo watchlist when API unavailable
+[33m07d25a8[m Merge pull request #19 from cynoguard/dev
+[33mbf34cee[m Merge pull request #18 from cynoguard/dave
