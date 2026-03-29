@@ -13,7 +13,7 @@
 
 import { auth } from "@/lib/firebase";
 
-const API = "/api";
+const API = "https://api.cynoguard.com";
 
 // ─── Internal fetch helper ────────────────────────────────────────────────────
 
