@@ -34,18 +34,23 @@ export function SentimentChart({ data, loading }: SentimentChartProps) {
     );
   }
 
-  const positive = data?.sentiment?.positive ?? 0;
-  const neutral = data?.sentiment?.neutral ?? 0;
-  const negative = data?.sentiment?.negative ?? 0;
+  const sentiment = data?.sentiment || {
+  positive: 0,
+  neutral: 0,
+  negative: 0,
+};
 
-  const total = positive + neutral + negative;
+const positive = sentiment.positive;
+const neutral = sentiment.neutral;
+const negative = sentiment.negative;
 
-  const chartData = [
-    { name: 'Positive', value: positive },
-    { name: 'Neutral', value: neutral },
-    { name: 'Negative', value: negative },
-  ];
+const chartData = [
+  { name: 'Positive', value: positive },
+  { name: 'Neutral', value: neutral },
+  { name: 'Negative', value: negative },
+];
 
+const total = chartData.reduce((sum, item) => sum + item.value, 0);
   return (
     <Card className="p-6">
 
