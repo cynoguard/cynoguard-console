@@ -1,4 +1,5 @@
 import { getActiveProjectId } from "@/lib/api/bot-management";
+import { auth } from "@/lib/firebase";
 
 // src/services/api/social-monitoring.ts
 const BASE = "https://api.cynoguard.com/";
@@ -111,10 +112,15 @@ export function mentionToAlert(m: BrandMention): SocialAlert {
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await auth.currentUser?.getIdToken().catch(() => undefined);
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
