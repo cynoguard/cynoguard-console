@@ -66,7 +66,7 @@ const total = chartData.reduce((sum, item) => sum + item.value, 0);
             <Tooltip
               formatter={(value: number) => {
                 const pct = total ? ((value / total) * 100).toFixed(1) : '0';
-                return `${value.toLocaleString()} mentions (${pct}%)`;
+                return `${value.toLocaleString()} (${pct}%)`;
               }}
               contentStyle={{
                 backgroundColor: '#1f2937',
