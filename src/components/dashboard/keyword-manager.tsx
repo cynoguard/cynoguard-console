@@ -147,7 +147,7 @@ export function KeywordManager({ projectId }: Props) {
         ) : keywords.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <Inbox className="mx-auto h-6 w-6 opacity-50" />
-            <p className="mt-2 text-sm">No keywords yet — add one above.</p>
+            <p className="mt-2 text-sm">No keywords found. Please add a keyword to begin monitoring.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
