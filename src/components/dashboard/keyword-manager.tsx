@@ -18,6 +18,15 @@ import { Hash, Inbox, Loader2, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+// Format date consistently across UI
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 interface Props { projectId: string }
 
 export function KeywordManager({ projectId }: Props) {
@@ -172,9 +181,7 @@ export function KeywordManager({ projectId }: Props) {
                     </TableCell>
                     <TableCell>{kw.mentionCount}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(kw.createdAt).toLocaleDateString("en-US", {
-                        month: "short", day: "numeric", year: "numeric",
-                      })}
+                      {formatDate(kw.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
