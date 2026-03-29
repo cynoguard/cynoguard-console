@@ -11,13 +11,17 @@ export async function PATCH(
   { params }: { params: Promise<{ mentionId: string }> }
 ) {
   try {
+    const authHeader = request.headers.get("authorization");
     const { mentionId } = await params;
     const body = await request.json();
     const res = await fetch(
       `${BACKEND}/api/v1/projects/${PROJECT_ID}/mentions/${mentionId}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeader ? { Authorization: authHeader } : {}),
+        },
         body: JSON.stringify(body),
       }
     );
