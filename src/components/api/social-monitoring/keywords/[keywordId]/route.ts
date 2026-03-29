@@ -13,13 +13,17 @@ export async function PATCH(
   { params }: { params: Promise<{ keywordId: string }> }
 ) {
   try {
+    const authHeader = request.headers.get("authorization");
     const { keywordId } = await params;
     const body = await request.json();
     const res = await fetch(
       `${BACKEND}/api/v1/projects/${PROJECT_ID}/keywords/${keywordId}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeader ? { Authorization: authHeader } : {}),
+        },
         body: JSON.stringify(body),
       }
     );
@@ -31,14 +35,18 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ keywordId: string }> }
 ) {
   try {
+    const authHeader = request.headers.get("authorization");
     const { keywordId } = await params;
     const res = await fetch(
       `${BACKEND}/api/v1/projects/${PROJECT_ID}/keywords/${keywordId}`,
-      { method: "DELETE" }
+      {
+        method: "DELETE",
+        headers: authHeader ? { Authorization: authHeader } : undefined,
+      }
     );
     if (res.status === 204) return new NextResponse(null, { status: 204 });
     const data = await res.json();
