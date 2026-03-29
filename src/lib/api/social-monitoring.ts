@@ -4,7 +4,7 @@
 
 import { auth } from "@/lib/firebase";
 
-const BASE = "https://api.cynoguard.com";
+const BASE = "/api";
 
 export const getActiveProjectId = (): string | null => {
   if (typeof window === "undefined") return null;
@@ -43,7 +43,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ─── Types ────────────────────────────────────────────
 
-export type RiskLevel     = "LOW" | "MEDIUM" | "HIGH";
+export type RiskLevel     = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type Sentiment     = "POSITIVE" | "NEGATIVE" | "NEUTRAL";
 export type MentionStatus = "NEW" | "VIEWED" | "DISMISSED" | "ARCHIVED";
 
@@ -140,6 +140,21 @@ export const resolveMention = (mentionId: string) => {
   if (!pid) return Promise.reject(new Error("No active project"));
   return apiFetch<BrandMention>(`/api/v1/projects/${pid}/mentions/${mentionId}`, {
     method: "PATCH", body: JSON.stringify({ status: "DISMISSED" }),
+  });
+};
+
+export const getMentionDetail = (mentionId: string) => {
+  const pid = getActiveProjectId();
+  if (!pid) return Promise.reject(new Error("No active project"));
+  return apiFetch<BrandMention>(`/api/v1/projects/${pid}/mentions/${mentionId}`);
+};
+
+export const updateMentionStatus = (mentionId: string, status: MentionStatus) => {
+  const pid = getActiveProjectId();
+  if (!pid) return Promise.reject(new Error("No active project"));
+  return apiFetch<BrandMention>(`/api/v1/projects/${pid}/mentions/${mentionId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 };
 

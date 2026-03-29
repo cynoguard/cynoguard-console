@@ -13,7 +13,7 @@
 
 import { auth } from "@/lib/firebase";
 
-const API = "https://api.cynoguard.com";
+const API = "/api";
 
 // ─── Internal fetch helper ────────────────────────────────────────────────────
 
@@ -81,7 +81,7 @@ export async function resolveProjectId(
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type RiskLevel     = "LOW" | "MEDIUM" | "HIGH";
+export type RiskLevel     = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type Sentiment     = "POSITIVE" | "NEGATIVE" | "NEUTRAL";
 export type MentionStatus = "NEW" | "VIEWED" | "DISMISSED" | "ARCHIVED";
 
@@ -187,6 +187,19 @@ export const resolveMention = (projectId: string, mentionId: string) =>
   call<BrandMention>(`/api/v1/projects/${projectId}/mentions/${mentionId}`, {
     method: "PATCH",
     body:   JSON.stringify({ status: "DISMISSED" }),
+  });
+
+export const getMentionDetail = (projectId: string, mentionId: string) =>
+  call<BrandMention>(`/api/v1/projects/${projectId}/mentions/${mentionId}`);
+
+export const updateMentionStatus = (
+  projectId: string,
+  mentionId: string,
+  status: MentionStatus
+) =>
+  call<BrandMention>(`/api/v1/projects/${projectId}/mentions/${mentionId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 
 export const triggerScan = (projectId: string) =>
