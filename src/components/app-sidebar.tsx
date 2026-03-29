@@ -1,18 +1,18 @@
 "use client"
 
 import {
-    BookOpen,
-    Bot,
-    ChartArea,
-    Command,
-    Globe,
-    LayoutDashboard,
-    LifeBuoy,
-    Projector,
-    Search,
-    Send,
-    Settings2,
-    Users
+  BookOpen,
+  Bot,
+  ChartArea,
+  Command,
+  Globe,
+  LayoutDashboard,
+  LifeBuoy,
+  Projector,
+  Search,
+  Send,
+  Settings2,
+  Users
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
@@ -23,14 +23,14 @@ import { NavGeneralItem } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarSeparator,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 
